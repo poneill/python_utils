@@ -8,8 +8,10 @@ def median(xs):
     else:
         return mean(sorted(xs)[mp-1:mp+1])
     
-def variance(xs):
-    return mean([x**2 for x in xs]) - mean(xs) ** 2
+def variance(xs,correct=True):
+    n = len(xs)
+    correction = n/float(n-1) if correct else 1
+    return correction * mean([x**2 for x in xs]) - mean(xs) ** 2    
 
 def zipWith(f,xs,ys):
     return map(lambda(x,y):f(x,y),zip(xs,ys))
