@@ -105,3 +105,6 @@ def foldl(f,z,xs):
 
 def foldl1(f,xs):
     return foldl(f,xs[0],xs[1:])
+
+def choose(n,k):
+    return factorial(n)/(factorial(k) * factorial(n-k)
