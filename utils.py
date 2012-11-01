@@ -83,6 +83,9 @@ def choose2(xs,gen=False):
     else:
         return [(x1, x2) for i, x1 in enumerate(xs) for x2 in xs[i+1:]]
 
+def pairs(xs):
+    return zip(xs[:-1],xs[1:])
+
 def partition(pred, xs):
     part = []
     appended = False
