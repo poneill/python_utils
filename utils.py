@@ -41,6 +41,9 @@ def safe_log2(x):
     """Implements log2, but defines log2(0) = 0"""
     return math.log(x,2) if x > 0 else 0
 
+def group_by(xs,n):
+    return [xs[i:i+n] for i in range(0,len(xs),n)]
+    
 def split_on(xs, pred):
     """Split xs into a list of lists each beginning with the next x
     satisfying pred, except possibly the first"""
