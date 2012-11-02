@@ -73,7 +73,7 @@ def complement(base):
     return {"A":"T","T":"A","G":"C","C":"G"}[base]
     
 def wc(word):
-    return map(complement, word[::-1])
+    return "".join(map(complement, word[::-1]))
 
 def pprint(x):
     for row in x:
