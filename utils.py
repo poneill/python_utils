@@ -1,3 +1,5 @@
+import random
+
 def mean(xs):
     return sum(xs)/float(len(xs))
 
@@ -111,3 +113,37 @@ def foldl(f,z,xs):
 
 def foldl1(f,xs):
     return foldl(f,xs[0],xs[1:])
+
+# naive implementation borrowed from stack overflow
+
+def levenshtein(seq1, seq2):
+    oneago = None
+    thisrow = range(1, len(seq2) + 1) + [0]
+    for x in xrange(len(seq1)):
+        twoago, oneago, thisrow = oneago, thisrow, [0] * len(seq2) + [x + 1]
+        for y in xrange(len(seq2)):
+            delcost = oneago[y] + 1
+            addcost = thisrow[y - 1] + 1
+            subcost = oneago[y - 1] + (seq1[x] != seq2[y])
+            thisrow[y] = min(delcost, addcost, subcost)
+    return thisrow[len(seq2) - 1]
+
+def sample(n,xs,replace=True):
+    if replace:
+        return [random.choice(xs) for i in range(n)]
+    else:
+        ys = xs[:]
+        samp = []
+        for i in range(n):
+            y = random.choice(ys)
+            samp.append(y)
+            ys.remove(y)
+        return samp
+
+def matrix_mult(A,B):
+    """Given two row-major matrices as nested lists, return the matrix
+    product"""
+    return [[sum(A[i][k] * B[k][j] for k in range(len(A[0])))
+             for j in range(len(B[0]))]
+            for i in range(len(A))
+]
