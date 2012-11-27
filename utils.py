@@ -1,3 +1,5 @@
+import random
+
 def mean(xs):
     return sum(xs)/float(len(xs))
 
@@ -41,6 +43,9 @@ def safe_log2(x):
     """Implements log2, but defines log2(0) = 0"""
     return math.log(x,2) if x > 0 else 0
 
+def group_by(xs,n):
+    return [xs[i:i+n] for i in range(0,len(xs),n)]
+    
 def split_on(xs, pred):
     """Split xs into a list of lists each beginning with the next x
     satisfying pred, except possibly the first"""
@@ -70,7 +75,7 @@ def complement(base):
     return {"A":"T","T":"A","G":"C","C":"G"}[base]
     
 def wc(word):
-    return map(complement, word[::-1])
+    return "".join(map(complement, word[::-1]))
 
 def pprint(x):
     for row in x:
@@ -117,5 +122,38 @@ def concat(xxs):
 
 def mmap(f,xxs):
     return [map(f,xs) for xs in xxs]
+
+# naive implementation borrowed from stack overflow
+
+def levenshtein(seq1, seq2):
+    oneago = None
+    thisrow = range(1, len(seq2) + 1) + [0]
+    for x in xrange(len(seq1)):
+        twoago, oneago, thisrow = oneago, thisrow, [0] * len(seq2) + [x + 1]
+        for y in xrange(len(seq2)):
+            delcost = oneago[y] + 1
+            addcost = thisrow[y - 1] + 1
+            subcost = oneago[y - 1] + (seq1[x] != seq2[y])
+            thisrow[y] = min(delcost, addcost, subcost)
+    return thisrow[len(seq2) - 1]
+
+def sample(n,xs,replace=True):
+    if replace:
+        return [random.choice(xs) for i in range(n)]
+    else:
+        ys = xs[:]
+        samp = []
+        for i in range(n):
+            y = random.choice(ys)
+            samp.append(y)
+            ys.remove(y)
+        return samp
+
+def matrix_mult(A,B):
+    """Given two row-major matrices as nested lists, return the matrix
+    product"""
+    return [[sum(A[i][k] * B[k][j] for k in range(len(A[0])))
+             for j in range(len(B[0]))]
+            for i in range(len(A))]
 
 
