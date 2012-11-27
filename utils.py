@@ -110,4 +110,12 @@ def foldl1(f,xs):
     return foldl(f,xs[0],xs[1:])
 
 def choose(n,k):
-    return factorial(n)/(factorial(k) * factorial(n-k)
+    return factorial(n)/(factorial(k) * factorial(n-k))
+
+def concat(xxs):
+    return sum(xxs,[])
+
+def mmap(f,xxs):
+    return [map(f,xs) for xs in xxs]
+
+
