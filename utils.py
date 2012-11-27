@@ -156,4 +156,15 @@ def matrix_mult(A,B):
              for j in range(len(B[0]))]
             for i in range(len(A))]
 
+def iterate(f,x,n):
+    if n == 0:
+        return x
+    else:
+        return iterate(f,f(x),n-1)
 
+def converge(f,x):
+    y = f(x)
+    if y == x:
+        return x
+    else:
+        return converge(f,y)
