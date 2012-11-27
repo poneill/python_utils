@@ -162,7 +162,9 @@ def iterate(f,x,n):
     else:
         return iterate(f,f(x),n-1)
 
-def converge(f,x):
+def converge(f,x,verbose=False,i=0):
+    if verbose:
+        print i
     y = f(x)
     if y == x:
         return x
