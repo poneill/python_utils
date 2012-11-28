@@ -188,6 +188,7 @@ def converge2(f,x,verbose=False,i=0):
     return y
 
 def data2csv(data, filename, sep=", ",header=None,overwrite=False):
+    import os
     make_line = lambda row: sep.join([str(field) for field in row]) + "\n"
     if filename in os.listdir('.') and not overwrite:
         print "found ",filename
@@ -196,3 +197,12 @@ def data2csv(data, filename, sep=", ",header=None,overwrite=False):
         if header:
             f.write(make_line(header))
         f.write("".join([make_line(row) for row in data]))
+
+def dot(u,v):
+    return sum(zipWith(lambda x,y:x*y,u,v))
+
+def norm(u):
+    return sqrt(dot(u,u))
+
+def cosine_distance(u,v):
+    return dot(u,v)/(norm(u)*norm(v))
