@@ -162,6 +162,12 @@ def iterate(f,x,n):
     else:
         return iterate(f,f(x),n-1)
 
+def iterate_list(f,x,n):
+    if n == 0:
+        return [x]
+    else:
+        return  [x] + iterate_list(f,f(x),n-1)
+    
 def converge(f,x,verbose=False,i=0):
     if verbose:
         print i
@@ -170,3 +176,23 @@ def converge(f,x,verbose=False,i=0):
         return x
     else:
         return converge(f,y,verbose=verbose,i=i+1)
+
+def converge2(f,x,verbose=False,i=0):
+    y = f(x)
+    while not y == x:
+        if verbose:
+            print i
+            i += 1
+        x = y
+        y = f(x)
+    return y
+
+def data2csv(data, filename, sep=", ",header=None,overwrite=False):
+    make_line = lambda row: sep.join([str(field) for field in row]) + "\n"
+    if filename in os.listdir('.') and not overwrite:
+        print "found ",filename
+        pass
+    with open(filename, 'w') as f:
+        if header:
+            f.write(make_line(header))
+        f.write("".join([make_line(row) for row in data]))
