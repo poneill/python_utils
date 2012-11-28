@@ -169,4 +169,4 @@ def converge(f,x,verbose=False,i=0):
     if y == x:
         return x
     else:
-        return converge(f,y)
+        return converge(f,y,verbose=verbose,i=i+1)
