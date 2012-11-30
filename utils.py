@@ -209,3 +209,6 @@ def cosine_distance(u,v):
 
 def linf(xs,ys):
     return max(zipWith(lambda x,y:abs(x-y),xs,ys))
+
+def l2(xs,ys):
+    return sum(zipWith(lambda x,y:(x-y)**2,xs,ys))
