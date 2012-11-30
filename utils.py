@@ -206,3 +206,6 @@ def norm(u):
 
 def cosine_distance(u,v):
     return dot(u,v)/(norm(u)*norm(v))
+
+def linf(xs,ys):
+    return max(zipWith(lambda x,y:abs(x-y),xs,ys))
