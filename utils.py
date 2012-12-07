@@ -187,6 +187,15 @@ def converge2(f,x,verbose=False,i=0):
         y = f(x)
     return y
 
+def converge_list(f,x):
+    y = f(x)
+    history = [x,y]
+    while not y == x:
+        x = y
+        y = f(x)
+        history.append(y)
+    return history
+
 def data2csv(data, filename, sep=", ",header=None,overwrite=False):
     import os
     make_line = lambda row: sep.join([str(field) for field in row]) + "\n"
