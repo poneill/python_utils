@@ -226,7 +226,6 @@ def norm(u):
 def cosine_distance(u,v):
     return dot(u,v)/(norm(u)*norm(v))
 
-<<<<<<< HEAD
 def l2(xs,ys):
     return sum(zipWith(lambda x,y:(x-y)**2,xs,ys))
 
