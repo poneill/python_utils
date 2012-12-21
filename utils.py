@@ -150,6 +150,15 @@ def sample(n,xs,replace=True):
             ys.remove(y)
         return samp
 
+def fast_sample(n,xs):
+    """Sample without replacement for large xs"""
+    samp = []
+    while len(samp) < n:
+        x = random.choice(xs)
+        if not x in samp:
+            samp.append(x)
+    return samp
+
 def matrix_mult(A,B):
     """Given two row-major matrices as nested lists, return the matrix
     product"""
@@ -217,6 +226,7 @@ def norm(u):
 def cosine_distance(u,v):
     return dot(u,v)/(norm(u)*norm(v))
 
+<<<<<<< HEAD
 def l2(xs,ys):
     return sum(zipWith(lambda x,y:(x-y)**2,xs,ys))
 
@@ -230,6 +240,7 @@ def takeWhile(p,xs):
         return [xs[0]] + takeWhile(p,xs[1:])
 
 def signum(x):
+
     if x > 0:
         return 1
     elif x < 0:
@@ -238,18 +249,70 @@ def signum(x):
         return 0
     
 def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10):
-    x = float(xmin + xmax)/2
-    y = f(x)
-    if ymin is None or ymax is None:
+    print xmin,xmax,ymin,ymax
+    if ymin is None:
         ymin = f(xmin)
+    if ymax is None:
         ymax = f(xmax)
-    print xmin,x,xmax,ymin,y,ymax
-    if abs(xmax - xmin) < tolerance:
+    assert(sign(ymin)!= sign(ymax)), "ymin=%s,ymax=%s" % (ymin,ymax)
+    x = (xmin + xmax)/2.0
+    y = f(x)
+    if abs(y) < tolerance:
         return x
-    elif signum(y) == signum(ymin):
-        return bisect_interval(f,x,xmax,ymin=y,ymax=ymax,tolerance=tolerance)
     else:
-        return bisect_interval(f,xmin,x,ymin=ymin,ymax=y,tolerance=tolerance)
+        if sign(y) == sign(ymin):
+            return bisect_interval(f,x,xmax,ymin=y,ymax=ymax,tolerance=tolerance)
+        else:
+            return bisect_interval(f,xmin,x,ymin=ymin,ymax=y,tolerance=tolerance)
+
+def secant_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10):
+    #print xmin,xmax,ymin,ymax
+    if ymin is None:
+        ymin = f(xmin)
+    if ymax is None:
+        ymax = f(xmax)
+    assert(sign(ymin)!= sign(ymax)), "ymin=%s,ymax=%s" % (ymin,ymax)
+    m = (ymax - ymin)/(xmax - xmin)
+    x = xmax - ymax/m
+    y = f(x)
+    if abs(y) < tolerance:
+        return x
+    else:
+        if sign(y) == sign(ymin):
+            return secant_interval(f,x,xmax,ymin=y,ymax=ymax,tolerance=tolerance)
+        else:
+            return secant_interval(f,xmin,x,ymin=ymin,ymax=y,tolerance=tolerance)
+
+        
+def secant_interval_robust(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,p=0.1):
+    #print xmin,xmax,ymin,ymax
+    if ymin is None:
+        ymin = f(xmin)
+    if ymax is None:
+        ymax = f(xmax)
+    assert(sign(ymin)!= sign(ymax)), "ymin=%s,ymax=%s" % (ymin,ymax)
+    if random.random() > p:
+        m = (ymax - ymin)/(xmax - xmin)
+        x = xmax - ymax/m
+    else:
+        x = (xmax + xmin)/2.0
+    y = f(x)
+    if abs(y) < tolerance:
+        return x
+    else:
+        if sign(y) == sign(ymin):
+            return secant_interval_robust(f,x,xmax,ymin=y,ymax=ymax,tolerance=tolerance,p=p)
+        else:
+            return secant_interval_robust(f,xmin,x,ymin=ymin,ymax=y,tolerance=tolerance,p=p)
+
+def percentile(x,xs):
+    return len(filter(lambda y:y > x,xs))/float(len(xs))
+
+def normal_model(xs):
+    mu = mean(xs)
+    sigma = sqrt(variance(xs))
+    return [random.gauss(mu,sigma) for x in xs]
+
 
 def myrange(start,stop,step):
     return map(lambda x: start + (x-start)*step + start,
@@ -270,8 +333,3 @@ def grad_descent(f,x,y,ep_x=0.0001,ep_y=0.0001):
         ep_y *= epsilon_shrinkage
         print x,y,log(best_z),ep_x,ep_y
     return x,y
-    
-def normal_model(xs):
-    mu = mean(xs)
-    sd = sqrt(variance(xs))
-    return [random.gauss(mu,sd) for x in xs]
