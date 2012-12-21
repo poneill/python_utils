@@ -1,4 +1,5 @@
 import random
+from math import *
 
 def mean(xs):
     return sum(xs)/float(len(xs))
@@ -221,3 +222,56 @@ def l2(xs,ys):
 
 def linf(xs,ys):
     return max(zipWith(lambda x,y:abs(x-y),xs,ys))
+
+def takeWhile(p,xs):
+    if not xs or not p(xs[0]):
+        return []
+    else:
+        return [xs[0]] + takeWhile(p,xs[1:])
+
+def signum(x):
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
+    
+def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10):
+    x = float(xmin + xmax)/2
+    y = f(x)
+    if ymin is None or ymax is None:
+        ymin = f(xmin)
+        ymax = f(xmax)
+    print xmin,x,xmax,ymin,y,ymax
+    if abs(xmax - xmin) < tolerance:
+        return x
+    elif signum(y) == signum(ymin):
+        return bisect_interval(f,x,xmax,ymin=y,ymax=ymax,tolerance=tolerance)
+    else:
+        return bisect_interval(f,xmin,x,ymin=ymin,ymax=y,tolerance=tolerance)
+
+def myrange(start,stop,step):
+    return map(lambda x: start + (x-start)*step + start,
+               range(start,int(stop/step)))
+
+def grad_descent(f,x,y,ep_x=0.0001,ep_y=0.0001):
+    "minimize f"
+    z = f(x,y)
+    best_z = None
+    epsilon_shrinkage = 1
+    while best_z is None or z <= best_z or True:
+        z = best_z 
+        choices = [(x + ep_x,y),(x - ep_x,y),(x,y + ep_y),(x,y - ep_y)]
+        z_choices = map(lambda (x,y):f(x,y),choices)
+        choice = min(zip(choices,z_choices),key=lambda(z,z_ch):z_ch)
+        (x,y),best_z = choice
+        ep_x *= epsilon_shrinkage
+        ep_y *= epsilon_shrinkage
+        print x,y,log(best_z),ep_x,ep_y
+    return x,y
+    
+def normal_model(xs):
+    mu = mean(xs)
+    sd = sqrt(variance(xs))
+    return [random.gauss(mu,sd) for x in xs]
