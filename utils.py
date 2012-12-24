@@ -1,4 +1,5 @@
-import random,math
+import random
+from math import sqrt,log
 
 def mean(xs):
     return sum(xs)/float(len(xs))
@@ -222,6 +223,9 @@ def linf(xs,ys):
 def l2(xs,ys):
     return sum(zipWith(lambda x,y:(x-y)**2,xs,ys))
 
+def distance(xs,ys):
+    return sqrt(l2(xs,ys))
+
 def sign(x):
     if x > 0:
         return 1
@@ -301,3 +305,11 @@ def normal_model(xs):
     mu = mean(xs)
     sigma = sqrt(variance(xs))
     return [random.gauss(mu,sigma) for x in xs]
+
+def solve_quadratic(a,b,c):
+    discriminant = b**2-4*a*c
+    return ((-b + sqrt(discriminant))/(2*a),(-b - sqrt(discriminant))/(2*a))
+
+def show(x):
+    print x
+    return x
