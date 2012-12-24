@@ -197,6 +197,15 @@ def converge2(f,x,verbose=False,i=0):
         y = f(x)
     return y
 
+def converge_list(f,x):
+    y = f(x)
+    history = [x,y]
+    while not y == x:
+        x = y
+        y = f(x)
+        history.append(y)
+    return history
+
 def data2csv(data, filename, sep=", ",header=None,overwrite=False):
     import os
     make_line = lambda row: sep.join([str(field) for field in row]) + "\n"
@@ -217,11 +226,17 @@ def norm(u):
 def cosine_distance(u,v):
     return dot(u,v)/(norm(u)*norm(v))
 
+def l2(xs,ys):
+    return sum(zipWith(lambda x,y:(x-y)**2,xs,ys))
+
 def linf(xs,ys):
     return max(zipWith(lambda x,y:abs(x-y),xs,ys))
 
-def l2(xs,ys):
-    return sum(zipWith(lambda x,y:(x-y)**2,xs,ys))
+def takeWhile(p,xs):
+    if not xs or not p(xs[0]):
+        return []
+    else:
+        return [xs[0]] + takeWhile(p,xs[1:])
 
 def distance(xs,ys):
     return sqrt(l2(xs,ys))
@@ -291,13 +306,6 @@ def secant_interval_robust(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,p=0.1
         else:
             return secant_interval_robust(f,xmin,x,ymin=ymin,ymax=y,tolerance=tolerance,p=p)
 
-
-def myrange(start,stop,step):
-    i = start
-    while i < stop:
-        yield i
-        i += step
-
 def percentile(x,xs):
     return len(filter(lambda y:y > x,xs))/float(len(xs))
 
@@ -313,3 +321,24 @@ def solve_quadratic(a,b,c):
 def show(x):
     print x
     return x
+
+def myrange(start,stop,step):
+    return map(lambda x: start + (x-start)*step + start,
+               range(start,int(stop/step)))
+
+def grad_descent(f,x,y,ep_x=0.0001,ep_y=0.0001):
+    "minimize f"
+    z = f(x,y)
+    best_z = None
+    epsilon_shrinkage = 1
+    while best_z is None or z <= best_z or True:
+        z = best_z 
+        choices = [(x + ep_x,y),(x - ep_x,y),(x,y + ep_y),(x,y - ep_y)]
+        z_choices = map(lambda (x,y):f(x,y),choices)
+        choice = min(zip(choices,z_choices),key=lambda(z,z_ch):z_ch)
+        (x,y),best_z = choice
+        ep_x *= epsilon_shrinkage
+        ep_y *= epsilon_shrinkage
+        print x,y,log(best_z),ep_x,ep_y
+    return x,y
+
