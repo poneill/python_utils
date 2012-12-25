@@ -164,7 +164,14 @@ def matrix_mult(A,B):
     product"""
     return [[sum(A[i][k] * B[k][j] for k in range(len(A[0])))
              for j in range(len(B[0]))]
-            for i in range(len(A))]
+            for i in verbose_gen(range(len(A)))]
+
+def boolean_matrix_mult(A,B):
+    """Given two row-major boolean matrices as nested lists, return
+    the matrix product"""
+    return [[any(A[i][k] * B[k][j] for k in xrange(len(A[0])))
+             for j in xrange(len(B[0]))]
+            for i in verbose_gen(xrange(len(A)))]
 
 def iterate(f,x,n):
     if n == 0:
@@ -323,8 +330,8 @@ def show(x):
     return x
 
 def myrange(start,stop,step):
-    return map(lambda x: start + (x-start)*step + start,
-               range(start,int(stop/step)))
+    return map(lambda x: start + x*step,
+               range(int((stop-start)/step)))
 
 def grad_descent(f,x,y,ep_x=0.0001,ep_y=0.0001):
     "minimize f"
