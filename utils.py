@@ -1,6 +1,9 @@
 import random
 from math import sqrt,log
 
+def log2(x):
+    return log(x,2)
+
 def mean(xs):
     return sum(xs)/float(len(xs))
 
@@ -30,6 +33,9 @@ def frequencies(xs):
     length = float(len(xs))
     return [xs.count(x)/length for x in set(xs)]
 
+def unique(xs):
+    return list(set(xs))
+
 def verbose_gen(xs,modulus=1):
     for i,x in enumerate(xs):
         if not i % modulus:
@@ -37,12 +43,51 @@ def verbose_gen(xs,modulus=1):
         yield x
         
 def h(ps):
-    return -sum([p * log2(p) for p in ps])
-print "loaded utils"
+    """compute entropy (in bits) of a probability distribution ps"""
+    return -sum([p * safe_log2(p) for p in ps])
+
+def entropy(xs):
+    """compute entropy (in bits) of a sample from a categorical
+    probability distribution"""
+    ps = frequencies(xs)
+    return h(ps)
+
+def mi(xs,ys):
+    """Compute mutual information (in bits) of samples from two
+    categorical probability distributions"""
+    hx  = entropy(xs)
+    hy  = entropy(ys)
+    hxy = entropy(zip(xs,ys))
+    return hx + hy - hxy
+
+def permute(xs):
+    """Return a random permutation of xs"""
+    return sample(len(xs),xs,replace=False)
+
+def test_permute(xs):
+    permutation = permute(xs)
+    return all(permutation.count(x) == xs.count(x) for x in set(xs))
+
+def mi_permute(xs,ys,n=100,conf_int=False,p_value=False):
+    """For samples xs and ys, compute an expected MI value (or
+    confidence interval, or p_value for obtaining MI at least as high)
+    by computing the MI of randomly permuted columns xs and ys n times"""
+    replicates = [mi(permute(xs),permute(ys)) for i in range(n)]
+    if conf_int:
+        replicates = sorted(replicates)
+        lower,upper = (replicates[int(n*.05)],replicates[int(n*.95)])
+        assert lower <= upper
+        return (lower,upper)
+    elif p_value:
+        replicates = sorted(replicates)
+        mi_obs = mi(xs,ys)
+        return len(filter(lambda s: s >= mi_obs,replicates))/float(n)
+    else:
+        return mean(replicates)
 
 def safe_log2(x):
     """Implements log2, but defines log2(0) = 0"""
-    return math.log(x,2) if x > 0 else 0
+    return log(x,2) if x > 0 else 0
 
 def group_by(xs,n):
     return [xs[i:i+n] for i in range(0,len(xs),n)]
@@ -115,6 +160,9 @@ def foldl(f,z,xs):
 def foldl1(f,xs):
     return foldl(f,xs[0],xs[1:])
 
+def factorial(n):
+    return reduce(lambda x,y:x*y,range(1,n+1))
+
 def choose(n,k):
     return factorial(n)/(factorial(k) * factorial(n-k))
 
@@ -142,7 +190,7 @@ def sample(n,xs,replace=True):
     if replace:
         return [random.choice(xs) for i in range(n)]
     else:
-        ys = xs[:]
+        ys = list(xs[:])
         samp = []
         for i in range(n):
             y = random.choice(ys)
@@ -224,8 +272,16 @@ def data2csv(data, filename, sep=", ",header=None,overwrite=False):
             f.write(make_line(header))
         f.write("".join([make_line(row) for row in data]))
 
-def dot(u,v):
+def dot_reference(u,v):
+    """This implementation is apparently too cool for python.  see dot"""
     return sum(zipWith(lambda x,y:x*y,u,v))
+
+def dot(xs,ys):
+    """Fast dot product operation"""
+    acc = 0
+    for (x,y) in zip(xs,ys):
+        acc += x * y
+    return acc
 
 def norm(u):
     return sqrt(dot(u,u))
@@ -314,6 +370,7 @@ def secant_interval_robust(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,p=0.1
             return secant_interval_robust(f,xmin,x,ymin=ymin,ymax=y,tolerance=tolerance,p=p)
 
 def percentile(x,xs):
+    """Compute what percentile value x is in xs"""
     return len(filter(lambda y:y > x,xs))/float(len(xs))
 
 def normal_model(xs):
@@ -349,3 +406,83 @@ def grad_descent(f,x,y,ep_x=0.0001,ep_y=0.0001):
         print x,y,log(best_z),ep_x,ep_y
     return x,y
 
+def fdr(ps,alpha=0.05):
+    """Given a list of p-values and a desired significance alpha, find
+    the adjusted q-value such that a p-value less than q is expected
+    to be significant at alpha, via the Benjamini-Hochberg method."""
+    ps = sorted(ps)
+    m = len(ps)
+    ks = [k for k in range(m) if ps[k]<= k/float(m)*alpha]
+    K = max(ks) if ks else None
+    return ps[K] if K else None #if none are significant
+
+def bin(scores):
+    min_score = 8
+    max_score = 23
+    cutoffs = range(min_score,max_score,4)
+    partials = [len(filter(lambda score:score >= cutoff,scores))
+                for cutoff in cutoffs]
+    return map(lambda(x,y):x-y,pairs(partials))
+
+def hamming(xs,ys):
+    return sum(zipWith(lambda x,y:x!=y,xs,ys))
+
+def enumerate_mutant_neighbors(site):
+    sites = [site]
+    site = list(site)
+    for pos in range(len(site)):
+        old_base = site[pos]
+        for base in "atcg":
+            if not base == old_base:
+                site[pos] = base
+                sites.append("".join(site))
+        site[pos] = old_base
+    return sites
+
+def enumerate_mutant_sites(site,k=1):
+    site_dict = {site:0}
+    j = 0
+    for j in range(k):
+        print j
+        d = site_dict.copy()
+        for s in d:
+            if site_dict[s] != j:
+                continue
+            neighbors = enumerate_mutant_neighbors(s)
+            for neighbor in neighbors:
+                if not neighbor in site_dict:
+                    site_dict[neighbor] = j + 1
+    return site_dict.keys()
+
+def regexp_from_sites(sites):
+    """Return a minimal regexp matching given sites"""
+    pass        
+
+def sorted_indices(xs):
+    """Return a list of indices that puts xs in sorted order.
+    E.G.: sorted_indices([40,10,30,20]) => [1,3,2,0]"""
+    return [i for (i,v) in sorted(enumerate(xs),key=lambda(i,v):v)]
+
+def test_sorted_indices(xs):
+    si = sorted_indices(xs)
+    return sorted(xs) == [xs[i] for i in si]
+
+def total_motif_mi(motif):
+    cols = transpose(motif)
+    return sum([mi(col1,col2) for (col1,col2) in choose2(cols)])
+
+def random_site(n):
+    return "".join(random.choice("ACGT") for i in range(n))
+
+print "loaded utils"
+
+def get_ecoli_genome(at_lab=True):
+    lab_file = "/home/poneill/ecoli/NC_000913.fna"
+    home_file = "/home/pat/Dropbox/entropy/NC_000913.fna"
+    with open(lab_file if at_lab else home_file) as f:
+        genome = "".join([line.strip() for line in f.readlines()[1:]])
+    return "".join(g for g in genome if g in "ATGC") # contains other iupac symbols
+
+def random_substring(xs,k):
+    i = random.randint(0,len(xs)-k)
+    return xs[i:i+k]
