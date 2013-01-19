@@ -169,6 +169,7 @@ def matrix_mult(A,B):
 def boolean_matrix_mult(A,B):
     """Given two row-major boolean matrices as nested lists, return
     the matrix product"""
+    print "in boolean matrix mult"
     return [[any(A[i][k] * B[k][j] for k in xrange(len(A[0])))
              for j in xrange(len(B[0]))]
             for i in verbose_gen(xrange(len(A)))]
@@ -349,3 +350,25 @@ def grad_descent(f,x,y,ep_x=0.0001,ep_y=0.0001):
         print x,y,log(best_z),ep_x,ep_y
     return x,y
 
+def fdr(ps,alpha=0.05):
+    ps = sorted(ps)
+    m = len(ps)
+    k = max([i for i in range(m) if ps[i] <= i/float(m) * alpha])
+    print k
+    return ps[k]
+
+def find_connected_components(M):
+    """Given a graph represented as a row-major adjacency matrix,
+    return a list of M's components"""
+    components = []
+    n = len(M)
+    while len(components) < n:
+        found_yet = concat(components)
+        i = min([i for i in range(n) if not i in found_yet])
+    v = [[i] + [0] * (n - 1)]
+    v_inf = converge(lambda x:boolean_matrix_mult(x,M),verbose=True)
+    component = [i for i in range(n) if v_inf[i]]
+    components.append(component)
+    
+def hamming(xs,ys):
+    return sum(zipWith(lambda x,y:x!=y,xs,ys))
