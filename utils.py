@@ -17,7 +17,17 @@ def median(xs):
 def variance(xs,correct=True):
     n = len(xs)
     correction = n/float(n-1) if correct else 1
-    return correction * mean([x**2 for x in xs]) - mean(xs) ** 2    
+    mu = mean(xs)
+    return correction * mean([(x-mu)**2 for x in xs])
+
+def sd(xs,correct=True):
+    return sqrt(variance(xs,correct=correct))
+
+def se(xs,correct=True):
+    return sd(xs,correct)/sqrt(len(xs))
+
+def coev(xs,correct=True):
+    return sd(xs,correct)/mean(xs)
 
 def zipWith(f,xs,ys):
     return map(lambda(x,y):f(x,y),zip(xs,ys))
@@ -197,6 +207,9 @@ def sample(n,xs,replace=True):
             samp.append(y)
             ys.remove(y)
         return samp
+
+def bs(xs):
+    return sample(len(xs),xs,replace=True)
 
 def fast_sample(n,xs):
     """Sample without replacement for large xs"""
@@ -486,3 +499,7 @@ def get_ecoli_genome(at_lab=True):
 def random_substring(xs,k):
     i = random.randint(0,len(xs)-k)
     return xs[i:i+k]
+
+def subst(xs,ys,i):
+    """Substitute substring ys in xs, starting at i"""
+    return xs[:i] + ys + xs[i+len(ys):]
