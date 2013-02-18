@@ -234,6 +234,7 @@ def matrix_mult(A,B):
 def boolean_matrix_mult(A,B):
     """Given two row-major boolean matrices as nested lists, return
     the matrix product"""
+    print "in boolean matrix mult"
     return [[any(A[i][k] * B[k][j] for k in xrange(len(A[0])))
              for j in xrange(len(B[0]))]
             for i in verbose_gen(xrange(len(A)))]
@@ -423,6 +424,22 @@ def grad_descent(f,x,y,ep_x=0.0001,ep_y=0.0001):
         print x,y,log(best_z),ep_x,ep_y
     return x,y
 
+def find_connected_components(M):
+    """Given a graph represented as a row-major adjacency matrix,
+    return a list of M's components"""
+    components = []
+    n = len(M)
+    while len(components) < n:
+        found_yet = concat(components)
+        i = min([i for i in range(n) if not i in found_yet])
+    v = [[i] + [0] * (n - 1)]
+    v_inf = converge(lambda x:boolean_matrix_mult(x,M),verbose=True)
+    component = [i for i in range(n) if v_inf[i]]
+    components.append(component)
+    
+def hamming(xs,ys):
+    return sum(zipWith(lambda x,y:x!=y,xs,ys))
+
 def fdr(ps,alpha=0.05):
     """Given a list of p-values and a desired significance alpha, find
     the adjusted q-value such that a p-value less than q is expected
@@ -495,7 +512,7 @@ print "loaded utils"
 
 def get_ecoli_genome(at_lab=True):
     lab_file = "/home/poneill/ecoli/NC_000913.fna"
-    home_file = "/home/pat/Dropbox/entropy/NC_000913.fna"
+    home_file = "/home/pat/ecoli/NC_000913.fna"
     with open(lab_file if at_lab else home_file) as f:
         genome = "".join([line.strip() for line in f.readlines()[1:]])
     return "".join(g for g in genome if g in "ATGC") # contains other iupac symbols
@@ -509,3 +526,4 @@ def subst(xs,ys,i):
     if not type(ys) is list:
         ys = [ys]
     return xs[:i] + ys + xs[i+len(ys):]
+
