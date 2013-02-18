@@ -62,6 +62,10 @@ def entropy(xs):
     ps = frequencies(xs)
     return h(ps)
 
+def motif_entropy(motif):
+    """Return the entropy of a motif, assuming independence"""
+    return sum(map(entropy,transpose(motif)))
+
 def mi(xs,ys):
     """Compute mutual information (in bits) of samples from two
     categorical probability distributions"""
@@ -502,4 +506,6 @@ def random_substring(xs,k):
 
 def subst(xs,ys,i):
     """Substitute substring ys in xs, starting at i"""
+    if not type(ys) is list:
+        ys = [ys]
     return xs[:i] + ys + xs[i+len(ys):]
