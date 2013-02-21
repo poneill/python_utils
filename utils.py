@@ -66,15 +66,16 @@ def entropy(xs,correct=True,alphabet_size=None):
                   else 0) #Basharin 1959
     return h(ps) + correction
 
-def motif_entropy(motif):
+def motif_entropy(motif,correct=True):
     """Return the entropy of a motif, assuming independence"""
-    return sum(map(entropy,transpose(motif)))
+    return sum(map(lambda col:entropy(col,correct=True,alphabet_size=4),
+                   transpose(motif)))
 
-def motif_ic(motif):
+def motif_ic(motif,correct=True):
     """Return the entropy of a motif, assuming independence and a
     uniform genomic background"""
     site_length = len(motif[0])
-    return 2 * site_length - motif_entropy(motif)
+    return 2 * site_length - motif_entropy(motif,correct=correct)
 
 def mi(xs,ys):
     """Compute mutual information (in bits) of samples from two
