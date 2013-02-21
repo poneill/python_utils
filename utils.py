@@ -56,15 +56,25 @@ def h(ps):
     """compute entropy (in bits) of a probability distribution ps"""
     return -sum([p * safe_log2(p) for p in ps])
 
-def entropy(xs):
+def entropy(xs,correct=True,alphabet_size=None):
     """compute entropy (in bits) of a sample from a categorical
     probability distribution"""
+    if alphabet_size == None:
+        alphabet_size = len(set(xs)) # NB: assuming every element appears!
     ps = frequencies(xs)
-    return h(ps)
+    correction = ((alphabet_size - 1)/(2*log(2)*len(xs)) if correct
+                  else 0) #Basharin 1959
+    return h(ps) + correction
 
 def motif_entropy(motif):
     """Return the entropy of a motif, assuming independence"""
     return sum(map(entropy,transpose(motif)))
+
+def motif_ic(motif):
+    """Return the entropy of a motif, assuming independence and a
+    uniform genomic background"""
+    site_length = len(motif[0])
+    return 2 * site_length - motif_entropy(motif)
 
 def mi(xs,ys):
     """Compute mutual information (in bits) of samples from two
@@ -112,6 +122,14 @@ def split_on(xs, pred):
     indices = [i for (i,v) in enumerate(xs) if pred(v)]
     return [xs[i:j] for (i,j) in zip([0]+indices,indices+[len(xs)]) if i != j]
 
+def partition_according_to(f,xs):
+    """Partition xs according to f"""
+    part = []
+    xsys = [(x,f(x)) for x in xs]
+    yvals = set([y for (x,y) in xsys])
+    return [[x for (x,y) in xsys if y == yval] for yval in yvals]
+    
+    
 def separate(pred, lst):
     """separates lst into a list of elements satisfying pred and a list of 
     elements not satisfying it.
@@ -330,8 +348,9 @@ def sign(x):
     else:
         return 0
     
-def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10):
-    print xmin,xmax,ymin,ymax
+def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
+    if verbose:
+        print xmin,xmax,ymin,ymax
     if ymin is None:
         ymin = f(xmin)
     if ymax is None:
@@ -343,9 +362,11 @@ def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10):
         return x
     else:
         if sign(y) == sign(ymin):
-            return bisect_interval(f,x,xmax,ymin=y,ymax=ymax,tolerance=tolerance)
+            return bisect_interval(f,x,xmax,ymin=y,ymax=ymax,
+                                   tolerance=tolerance,verbose=verbose)
         else:
-            return bisect_interval(f,xmin,x,ymin=ymin,ymax=y,tolerance=tolerance)
+            return bisect_interval(f,xmin,x,ymin=ymin,ymax=y,
+                                   tolerance=tolerance,verbose=verbose)
 
 def secant_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10):
     #print xmin,xmax,ymin,ymax
@@ -527,3 +548,25 @@ def subst(xs,ys,i):
         ys = [ys]
     return xs[:i] + ys + xs[i+len(ys):]
 
+def cumsum(xs):
+    return [sum(xs[:i+1]) for i in range(len(xs))]
+
+def inverse_cdf_sample(xs,ps):
+    """Sample from xs according to probability distribution ps"""
+    PS = cumsum(ps)
+    r = random.random()
+    P,x = min(filter(lambda (P,x):P > r,zip(PS,xs)))
+    return x
+
+def pl(f,xs):
+    """A convenience function for plotting.
+    Usage: plt.plot(*pl(f,xs))"""
+    return [xs,map(f,xs)]
+
+def argmax(xs):
+    i,x = max(enumerate(xs),key= lambda (i,x):x)
+    return i
+
+def argmin(xs):
+    i,x = min(enumerate(xs),key= lambda (i,x):x)
+    return i
