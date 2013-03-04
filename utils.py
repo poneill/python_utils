@@ -1,5 +1,6 @@
 import random
 from math import sqrt,log
+from collections import Counter
 
 def log2(x):
     return log(x,2)
@@ -13,7 +14,12 @@ def median(xs):
         return sorted(xs)[mp]
     else:
         return mean(sorted(xs)[mp-1:mp+1])
-    
+
+def mode(xs):
+    counts = Counter(xs)
+    x,count = max(counts.items(),key=lambda(x,y):y)
+    return x
+
 def variance(xs,correct=True):
     n = len(xs)
     correction = n/float(n-1) if correct else 1
@@ -99,8 +105,22 @@ def safe_log2(x):
     """Implements log2, but defines log2(0) = 0"""
     return log(x,2) if x > 0 else 0
 
+def round_up(x):
+    return int(x) + (x%1 > 0)
+
 def group_by(xs,n):
-    return [xs[i:i+n] for i in range(0,len(xs),n)]
+    chunks = [xs[i:i+n] for i in range(0,len(xs),n)]
+    assert(xs == concat(chunks))
+    return chunks
+
+def group_into(xs,n):
+    """Group xs into n chunks, without preserving order"""
+    chunks = [[] for __ in range(n)]
+    for i,x in enumerate(xs):
+        chunks[i%n].append(x)
+        print chunks
+    assert(set(concat(chunks)) == set(xs))
+    return chunks
     
 def split_on(xs, pred):
     """Split xs into a list of lists each beginning with the next x
@@ -326,8 +346,9 @@ def sign(x):
     else:
         return 0
     
-def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10):
-    print xmin,xmax,ymin,ymax
+def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
+    if verbose:
+        print xmin,xmax,ymin,ymax
     if ymin is None:
         ymin = f(xmin)
     if ymax is None:
@@ -521,3 +542,34 @@ def subst(xs,ys,i):
     """Substitute substring ys in xs, starting at i"""
     return xs[:i] + ys + xs[i+len(ys):]
 
+def cumsum(xs):
+    """Return cumulative sum of xs"""
+    return [sum(xs[:i]) for i in range(1,len(xs)+1)]
+
+def inverse_cdf_sample(xs,ps):
+    """Sample from xs according to probability mass function ps"""
+    PS = cumsum(ps)
+    r = random.random()
+    i,P = min(filter(lambda (i,P): P > r,enumerate(PS)))
+    return xs[i]
+
+def first(x):
+    return x[0]
+
+def second(x):
+    return x[1]
+
+def third(x):
+    return x[2]
+
+def omit(xs,i):
+    return [x for j,x in enumerate(xs) if not i == j]
+
+def cv(data,k=10):
+    """Return the dataset chunked into k tuples of the form
+    (training_set, test_set)"""
+    data_copy = data[:]
+    random.shuffle(data_copy)
+    chunks = group_into(data_copy,k)
+    return [(concat(omit(chunks,i)),chunks[i]) for i in range(k)]
+    
