@@ -64,11 +64,19 @@ def entropy(xs,correct=True,alphabet_size=None):
     ps = frequencies(xs)
     correction = ((alphabet_size - 1)/(2*log(2)*len(xs)) if correct
                   else 0) #Basharin 1959
+    #print "correction:",correction
+    return h(ps) + correction
+
+def dna_entropy(xs):
+    """compute entropy (in bits) of a DNA sample"""
+    ps = frequencies(xs)
+    correction = (3)/(2*log(2)*len(xs)) #Basharin 1959
+    #print "correction:",correction
     return h(ps) + correction
 
 def motif_entropy(motif,correct=True):
     """Return the entropy of a motif, assuming independence"""
-    return sum(map(lambda col:entropy(col,correct=True,alphabet_size=4),
+    return sum(map(lambda col:dna_entropy(col),
                    transpose(motif)))
 
 def motif_ic(motif,correct=True):
@@ -153,8 +161,18 @@ def nmers(n):
 def complement(base):
     return {"A":"T","T":"A","G":"C","C":"G"}[base]
     
-def wc(word):
+def wc_ref(word):
+    """Reference implementation of reverse complement method.  Not for
+    use in production because Python is terrible"""
     return "".join(map(complement, word[::-1]))
+
+def wc(word):
+    """Reverse complement function"""
+    # see wc_ref for non-terrible implementation
+    new_word = ""
+    for c in word:
+        new_word += {"A":"T","T":"A","G":"C","C":"G"}[c] #~3x speedup by inlining
+    return new_word
 
 def pprint(x):
     for row in x:
@@ -571,3 +589,19 @@ def argmax(xs):
 def argmin(xs):
     i,x = min(enumerate(xs),key= lambda (i,x):x)
     return i
+
+def generate_greedy_motif_with_ic(desired_ic,epsilon,num_seqs,length,verbose=False):
+    motif = [random_site(length) for i in range(num_seqs)]
+    ic = motif_ic(motif)
+    while(abs(desired_ic - ic) > epsilon):
+        motif_prime = motif[:]
+        n = random.randrange(num_seqs)
+        l = random.randrange(length)
+        motif_prime[n] = string_replace(motif_prime[n],l,random.choice("ACGT"))
+        ic_prime = motif_ic(motif_prime)
+        if abs(ic_prime - desired_ic) < abs(ic - desired_ic):
+            motif = motif_prime
+            ic = motif_ic(motif)
+        if verbose:
+            print ic
+    return motif
