@@ -35,6 +35,7 @@ def se(xs,correct=True):
 def coev(xs,correct=True):
     return sd(xs,correct)/mean(xs)
 
+
 def zipWith(f,xs,ys):
     return map(lambda(x,y):f(x,y),zip(xs,ys))
 
@@ -522,11 +523,11 @@ def hamming(xs,ys):
     return sum(zipWith(lambda x,y:x!=y,xs,ys))
 
 def enumerate_mutant_neighbors(site):
-    sites = [site]
+    sites = [] # changed this to exclude site itself Tue Mar  5 13:52:48 EST 2013
     site = list(site)
     for pos in range(len(site)):
         old_base = site[pos]
-        for base in "atcg":
+        for base in "ATCG":
             if not base == old_base:
                 site[pos] = base
                 sites.append("".join(site))
@@ -583,7 +584,7 @@ def random_substring(xs,k):
 
 def subst(xs,ys,i):
     """Substitute substring ys in xs, starting at i"""
-    if not type(ys) is list:
+    if not (type(ys) is list or type(ys) is str):
         ys = [ys]
     return xs[:i] + ys + xs[i+len(ys):]
 
@@ -652,3 +653,21 @@ def cv(data,k=10):
     random.shuffle(data_copy)
     chunks = group_into(data_copy,k)
     return [(concat(omit(chunks,i)),chunks[i]) for i in range(k)]
+
+def acf(xs,max_lag=None):
+    """Compute the auto-correlation naively"""
+    n = len(xs)
+    if max_lag is None:
+        max_lag = n/2
+    mu = mean(xs)
+    sigma_sq = variance(xs)
+    return [mean([(xs[i] - mu) * (xs[i+t]-mu)/sigma_sq for i in range(n-t)])
+            for t in range(max_lag)]
+
+def qqplot(xs,ys):
+    sorted_xs = sorted(xs)
+    sorted_ys = sorted(ys)
+    minimum = min(sorted_xs[0],sorted_ys[0])
+    maximum = max(sorted_xs[-1],sorted_ys[-1])
+    plt.scatter(sorted_xs,sorted_ys)
+    plt.plot([minimum,maximum],[minimum,maximum])
