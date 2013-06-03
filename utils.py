@@ -1,6 +1,7 @@
 import random
-from math import sqrt,log
+from math import sqrt,log,exp,pi,sin,cos,gamma
 from collections import Counter
+epsilon = 10**-100
 
 def log2(x):
     return log(x,2)
@@ -8,12 +9,18 @@ def log2(x):
 def mean(xs):
     return sum(xs)/float(len(xs))
 
+def geo_mean(xs):
+    return product(xs)**(1.0/len(xs))
+
 def median(xs):
     mp = int(len(xs)/2)
     if len(xs) % 2 == 1:
         return sorted(xs)[mp]
     else:
         return mean(sorted(xs)[mp-1:mp+1])
+
+def mean_and_sd(xs):
+    return mean(xs),sd(xs)
 
 def mode(xs):
     counts = Counter(xs)
@@ -32,6 +39,12 @@ def sd(xs,correct=True):
 def se(xs,correct=True):
     return sd(xs,correct)/sqrt(len(xs))
 
+def ci(xs):
+    """Return 95% CI for mean"""
+    mu = mean(xs)
+    s = se(xs)
+    return (mu - s,mu + s)
+    
 def coev(xs,correct=True):
     return sd(xs,correct)/mean(xs)
 
@@ -142,8 +155,7 @@ def group_into(xs,n):
     chunks = [[] for __ in range(n)]
     for i,x in enumerate(xs):
         chunks[i%n].append(x)
-        print chunks
-    assert(set(concat(chunks)) == set(xs))
+    #assert(set(concat(chunks)) == set(xs))
     return chunks
     
 def split_on(xs, pred):
@@ -191,8 +203,8 @@ def wc(word):
     """Reverse complement function"""
     # see wc_ref for non-terrible implementation
     new_word = ""
-    for c in word:
-        new_word += {"A":"T","T":"A","G":"C","C":"G"}[c] #~3x speedup by inlining
+    for c in word[::-1]:
+        new_word += {"A":"T","T":"A","G":"C","C":"G","N":"N"}[c] #~3x speedup by inlining
     return new_word
 
 def pprint(x):
@@ -232,11 +244,11 @@ def foldl(f,z,xs):
 def foldl1(f,xs):
     return foldl(f,xs[0],xs[1:])
 
-def factorial(n):
-    return reduce(lambda x,y:x*y,range(1,n+1))
+def fac(n):
+    return gamma(n+1)
 
 def choose(n,k):
-    return factorial(n)/(factorial(k) * factorial(n-k))
+    return fac(n)/(fac(k) * fac(n-k))
 
 def concat(xxs):
     return sum(xxs,[])
@@ -288,6 +300,14 @@ def matrix_mult(A,B):
     return [[sum(A[i][k] * B[k][j] for k in range(len(A[0])))
              for j in range(len(B[0]))]
             for i in verbose_gen(range(len(A)))]
+
+def matrix_power(A,n):
+    if n == 1:
+        return A
+    elif n % 2 == 0:
+        return matrix_power(matrix_mult(A,A),n/2)
+    else:
+        return matrix_mult(A,matrix_power(A,n-1))
 
 def boolean_matrix_mult(A,B):
     """Given two row-major boolean matrices as nested lists, return
@@ -365,8 +385,11 @@ def norm(u):
 def cosine_distance(u,v):
     return dot(u,v)/(norm(u)*norm(v))
 
+def l1(xs,ys):
+    return sum(zipWith(lambda x,y:abs(x-y),xs,ys))
+
 def l2(xs,ys):
-    return sum(zipWith(lambda x,y:(x-y)**2,xs,ys))
+    return sqrt(sum(zipWith(lambda x,y:(x-y)**2,xs,ys)))
 
 def linf(xs,ys):
     return max(zipWith(lambda x,y:abs(x-y),xs,ys))
@@ -558,6 +581,9 @@ def sorted_indices(xs):
     E.G.: sorted_indices([40,10,30,20]) => [1,3,2,0]"""
     return [i for (i,v) in sorted(enumerate(xs),key=lambda(i,v):v)]
 
+def indices_where(xs,p):
+    return [i for (i,x) in enumerate(xs) if p(x)]
+
 def test_sorted_indices(xs):
     si = sorted_indices(xs)
     return sorted(xs) == [xs[i] for i in si]
@@ -591,12 +617,45 @@ def subst(xs,ys,i):
 def cumsum(xs):
     return [sum(xs[:i+1]) for i in range(len(xs))]
 
-def inverse_cdf_sample(xs,ps):
+def fast_cumsum(xs):
+    acc = 0
+    acc_list = []
+    for x in xs:
+        acc += x
+        acc_list.append(acc)
+    return acc_list
+
+def inverse_cdf_sample_reference(xs,ps):
     """Sample from xs according to probability distribution ps"""
     PS = cumsum(ps)
     r = random.random()
     P,x = min(filter(lambda (P,x):P > r,zip(PS,xs)))
     return x
+
+def inverse_cdf_sample_reference2(xs,ps):
+    """Sample from xs according to probability distribution ps"""
+    PS = fast_cumsum(ps)
+    r = random.random()
+    P,x = min(filter(lambda (P,x):P > r,zip(PS,xs)))
+    for P,x in zip(PS,xs): #slightly slower!
+        if P > r:
+            return x
+
+def inverse_cdf_reference3(xs,ps):
+    """Sample from xs according to probability distribution ps"""
+    PS = fast_cumsum(ps)
+    r = random.random()
+    P,x = min(filter(lambda (P,x):P > r,zip(PS,xs)))
+    return x
+
+def inverse_cdf_sample(xs,ps):
+    r = random.random()
+    acc = 0
+    for x,p in zip(xs,ps):
+        acc += p
+        if acc > r:
+            return x
+            
 
 def pl(f,xs):
     """A convenience function for plotting.
@@ -618,7 +677,7 @@ def generate_greedy_motif_with_ic(desired_ic,epsilon,num_seqs,length,verbose=Fal
         motif_prime = motif[:]
         n = random.randrange(num_seqs)
         l = random.randrange(length)
-        motif_prime[n] = string_replace(motif_prime[n],l,random.choice("ACGT"))
+        motif_prime[n] = subst(motif_prime[n],random.choice("ACGT"),l)
         ic_prime = motif_ic(motif_prime)
         if abs(ic_prime - desired_ic) < abs(ic - desired_ic):
             motif = motif_prime
@@ -626,13 +685,6 @@ def generate_greedy_motif_with_ic(desired_ic,epsilon,num_seqs,length,verbose=Fal
         if verbose:
             print ic
     return motif
-
-def inverse_cdf_sample(xs,ps):
-    """Sample from xs according to probability mass function ps"""
-    PS = cumsum(ps)
-    r = random.random()
-    i,P = min(filter(lambda (i,P): P > r,enumerate(PS)))
-    return xs[i]
 
 def first(x):
     return x[0]
@@ -646,11 +698,12 @@ def third(x):
 def omit(xs,i):
     return [x for j,x in enumerate(xs) if not i == j]
 
-def cv(data,k=10):
+def cv(data,k=10,randomize=True):
     """Return the dataset chunked into k tuples of the form
     (training_set, test_set)"""
     data_copy = data[:]
-    random.shuffle(data_copy)
+    if randomize:
+        random.shuffle(data_copy)
     chunks = group_into(data_copy,k)
     return [(concat(omit(chunks,i)),chunks[i]) for i in range(k)]
 
@@ -671,3 +724,159 @@ def qqplot(xs,ys):
     maximum = max(sorted_xs[-1],sorted_ys[-1])
     plt.scatter(sorted_xs,sorted_ys)
     plt.plot([minimum,maximum],[minimum,maximum])
+
+def rslice(xs,js):
+    return [xs[j] for j in js]
+
+def exponential(z):
+        a = z.real
+        b = z.imag
+        return exp(a)*(cos(b) + 1j * sin(b))
+
+def dft(xs):
+    N = float(len(xs))
+    return [sum(x_n*(exponential(-1j*2*pi*k*n/N))
+                for (n,x_n) in enumerate(xs))
+            for k in range(int(N))]
+
+def inv_dft(xs):
+    N = float(len(xs))
+    return [sum(x_n*exponential(1j*2*pi*k*n/N) for (n,x_n) in enumerate(xs))/N
+            for k in range(int(N))]
+
+def convolve(xs,ys):
+    XS = dft(xs)
+    YS = dft(ys)
+    return inv_dft([X*Y for (X,Y) in zip(XS,YS)])
+
+def circular_rolling_average(xs,k):
+    """return circular rolling average of window of /radius/ k centered
+    about x"""
+    n = len(xs)
+    ys = xs[-k:] + xs + xs[:k]
+    return [mean(ys[(i-k):(i+k+1)]) for i in xrange(k,n + k)]
+
+def weiner_deconvolution(ys):
+    # Supposing y = h*x + n
+    # where x is the true signal,
+    # h is the impulse response
+    pass
+
+def dpoisson(k,lamb):
+    """Poisson density function"""
+    return lamb**k*exp(-lamb)/fac(k)
+
+def rpoisson(lamb):
+    """Poisson sampling.  (Knuth vol. 2)"""
+    L = exp(-lamb)
+    k = 0
+    p = 1
+    while p > L:
+        k = k + 1
+        u = random.random()
+        p *= u
+    return k - 1
+
+def poisson_model(xs):
+    """Return a poisson model of xs"""
+    lamb = mean(xs)
+    return [rpoisson(lamb) for x in xs]
+    
+def true_positives(predicted,actual):
+    return sum(zipWith(lambda p,a:p==1 and a == 1,predicted,actual))
+
+def true_negatives(predicted,actual):
+    return sum(zipWith(lambda p,a:p==0 and a == 0,predicted,actual))
+
+def false_positives(predicted,actual):
+    return sum(zipWith(lambda p,a:p==1 and a == 0,predicted,actual))
+
+def false_negatives(predicted,actual):
+    return sum(zipWith(lambda p,a:p==0 and a == 1,predicted,actual))
+
+def precision(predicted,actual):
+    tp = true_positives(predicted,actual)
+    fp = false_positives(predicted,actual)
+    return tp/float(tp + fp + epsilon)
+
+def recall(predicted,actual):
+    tp = true_positives(predicted,actual)
+    fn = false_negatives(predicted,actual)
+    return tp/float(tp + fn + epsilon)
+
+def accuracy(predicted,actual):
+    tp = true_positives(predicted,actual)
+    tn = true_negatives(predicted,actual)
+    fp = false_positives(predicted,actual)
+    fn = false_negatives(predicted,actual)
+    return (tp + tn)/float(tp + tn + fp + fn)
+
+def f_score(predicted,actual):
+    p = precision(predicted,actual)
+    r = recall(predicted,actual)
+    return 2 * p*r/(p + r + epsilon)
+
+def sliding_window(seq,w,verbose=False):
+    i = 0
+    n = len(seq)
+    while i < n - w + 1:
+        if verbose:
+            if i % verbose == 0:
+                print i
+        yield seq[i:i+w]
+        i += 1
+
+def consensus(motif):
+    """Return the consensus of a motif"""
+    cols = transpose(motif)
+    return "".join([char for (char,count) in
+                    map(lambda col:max(Counter(col).items(),key=lambda (b,c):c),
+                        cols)])
+
+def random_model(xs):
+    mu = mean(xs)
+    sigma = sd(xs)
+    return [random.gauss(mu,sigma) for x in xs]
+
+def qqplot(xs,ys=None):
+    if ys is None:
+        ys = normal_model(xs)
+    min_val = min(xs + ys)
+    max_val = max(xs + ys)
+    plt.scatter(sorted(xs),sorted(ys))
+    plt.plot([min_val,min_val],[max_val,max_val])
+
+def iota(x):
+    """Identity function.  Surprisingly useful to have around"""
+    return x
+    
+def head(xs, p=iota):
+    """Take first element of xs, optionally satisfying predicate p"""
+    filtered_xs = filter(p, xs)
+    return filtered_xs[0] if filtered_xs else []
+
+def product_ref(xs):
+    """multiply elements of list.  Python doesn't implement TCO so
+    this implementation is not safe for production.  See product."""
+    return foldl(lambda x,y:x*y,1,xs)
+
+def product(xs):
+    acc = 1
+    for x in xs:
+        acc *= x
+    return acc
+
+def unflip_motif(motif):
+    """Given a collection of possibly reverse complemented sites,unflip them"""
+    from sufficache import PSSM
+    mutable_motif = motif[:]
+    for i,site in enumerate(motif):
+        loo_motif = [s for (j,s) in enumerate(motif) if not i == j]
+        pssm = PSSM(loo_motif)
+        fd_score = pssm.score(site,both_strands=False)
+        bk_score = pssm.score(wc(site),both_strands=False)
+        print site
+        print fd_score,bk_score
+        if bk_score > fd_score:
+            mutable_motif[i] = wc(site)
+    return mutable_motif
