@@ -1,5 +1,5 @@
 import random
-from math import sqrt,log
+from math import sqrt,log,gamma
 from collections import Counter
 
 def log2(x):
@@ -233,7 +233,7 @@ def foldl1(f,xs):
     return foldl(f,xs[0],xs[1:])
 
 def factorial(n):
-    return reduce(lambda x,y:x*y,range(1,n+1))
+    return gamma(n+1)
 
 def choose(n,k):
     return factorial(n)/(factorial(k) * factorial(n-k))
@@ -287,7 +287,17 @@ def matrix_mult(A,B):
     product"""
     return [[sum(A[i][k] * B[k][j] for k in range(len(A[0])))
              for j in range(len(B[0]))]
-            for i in verbose_gen(range(len(A)))]
+            for i in (range(len(A)))]
+
+def identity_matrix(n):
+    return [[int(i == j) for j in range(n)] for i in range(n)]
+
+def matrix_add(A,B):
+    return [[A[i][j] + B[i][j] for j in range(len(B[0]))]
+            for i in range(len(A))]
+
+def matrix_scalar_mult(c,A):
+    return mmap(lambda x:x*c,A)
 
 def boolean_matrix_mult(A,B):
     """Given two row-major boolean matrices as nested lists, return
@@ -618,7 +628,7 @@ def generate_greedy_motif_with_ic(desired_ic,epsilon,num_seqs,length,verbose=Fal
         motif_prime = motif[:]
         n = random.randrange(num_seqs)
         l = random.randrange(length)
-        motif_prime[n] = string_replace(motif_prime[n],l,random.choice("ACGT"))
+        motif_prime[n] = subst(motif_prime[n],random.choice("ACGT"),l)
         ic_prime = motif_ic(motif_prime)
         if abs(ic_prime - desired_ic) < abs(ic - desired_ic):
             motif = motif_prime
