@@ -299,7 +299,17 @@ def matrix_mult(A,B):
     product"""
     return [[sum(A[i][k] * B[k][j] for k in range(len(A[0])))
              for j in range(len(B[0]))]
-            for i in verbose_gen(range(len(A)))]
+            for i in (range(len(A)))]
+
+def identity_matrix(n):
+    return [[int(i == j) for j in range(n)] for i in range(n)]
+
+def matrix_add(A,B):
+    return [[A[i][j] + B[i][j] for j in range(len(B[0]))]
+            for i in range(len(A))]
+
+def matrix_scalar_mult(c,A):
+    return mmap(lambda x:x*c,A)
 
 def matrix_power(A,n):
     if n == 1:
