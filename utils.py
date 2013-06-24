@@ -545,14 +545,6 @@ def fdr(ps,alpha=0.05):
     K = max(ks) if ks else None
     return ps[K] if K else None #if none are significant
 
-def bin(scores):
-    min_score = 8
-    max_score = 23
-    cutoffs = range(min_score,max_score,4)
-    partials = [len(filter(lambda score:score >= cutoff,scores))
-                for cutoff in cutoffs]
-    return map(lambda(x,y):x-y,pairs(partials))
-
 def hamming(xs,ys):
     return sum(zipWith(lambda x,y:x!=y,xs,ys))
 
