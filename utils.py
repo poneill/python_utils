@@ -880,3 +880,11 @@ def unflip_motif(motif):
 def interpolate(start,stop,steps):
     return [start + i*(stop-start)/float(steps-1) for i in range(steps)]
 
+def maybesave(filename):
+    """
+    Convenience function for plots.
+    """
+    if filename:
+        plt.savefig(filename,dpi=400)
+    else:
+        plt.show()
