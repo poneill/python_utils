@@ -1,4 +1,4 @@
-import random
+}}import random
 from math import sqrt,log,exp,pi,sin,cos,gamma
 from collections import Counter
 epsilon = 10**-100
@@ -890,3 +890,6 @@ def unflip_motif(motif):
         if bk_score > fd_score:
             mutable_motif[i] = wc(site)
     return mutable_motif
+
+def hello_world():
+    print "hello, world!"
