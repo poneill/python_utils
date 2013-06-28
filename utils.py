@@ -1,6 +1,7 @@
 }}import random
 from math import sqrt,log,exp,pi,sin,cos,gamma
 from collections import Counter
+from matplotlib import pyplot as plt
 epsilon = 10**-100
 
 def log2(x):
@@ -544,14 +545,6 @@ def fdr(ps,alpha=0.05):
     K = max(ks) if ks else None
     return ps[K] if K else None #if none are significant
 
-def bin(scores):
-    min_score = 8
-    max_score = 23
-    cutoffs = range(min_score,max_score,4)
-    partials = [len(filter(lambda score:score >= cutoff,scores))
-                for cutoff in cutoffs]
-    return map(lambda(x,y):x-y,pairs(partials))
-
 def hamming(xs,ys):
     return sum(zipWith(lambda x,y:x!=y,xs,ys))
 
@@ -605,7 +598,7 @@ def total_motif_mi(motif):
 def random_site(n):
     return "".join(random.choice("ACGT") for i in range(n))
 
-print "loaded utils"
+print "loaded utils anew"
 
 def get_ecoli_genome(at_lab=True):
     lab_file = "/home/poneill/ecoli/NC_000913.fna"
@@ -727,14 +720,6 @@ def acf(xs,max_lag=None):
     return [mean([(xs[i] - mu) * (xs[i+t]-mu)/sigma_sq for i in range(n-t)])
             for t in range(max_lag)]
 
-def qqplot(xs,ys):
-    sorted_xs = sorted(xs)
-    sorted_ys = sorted(ys)
-    minimum = min(sorted_xs[0],sorted_ys[0])
-    maximum = max(sorted_xs[-1],sorted_ys[-1])
-    plt.scatter(sorted_xs,sorted_ys)
-    plt.plot([minimum,maximum],[minimum,maximum])
-
 def rslice(xs,js):
     return [xs[j] for j in js]
 
@@ -848,13 +833,13 @@ def random_model(xs):
     sigma = sd(xs)
     return [random.gauss(mu,sigma) for x in xs]
 
-def qqplot(xs,ys=None):
+def qqplot(xs,ys=None):    
     if ys is None:
         ys = normal_model(xs)
     min_val = min(xs + ys)
     max_val = max(xs + ys)
     plt.scatter(sorted(xs),sorted(ys))
-    plt.plot([min_val,min_val],[max_val,max_val])
+    plt.plot([min_val,max_val],[min_val,max_val])
 
 def iota(x):
     """Identity function.  Surprisingly useful to have around"""
@@ -891,5 +876,20 @@ def unflip_motif(motif):
             mutable_motif[i] = wc(site)
     return mutable_motif
 
+
 def hello_world():
     print "hello, world!"
+
+
+def interpolate(start,stop,steps):
+    return [start + i*(stop-start)/float(steps-1) for i in range(steps)]
+
+def maybesave(filename):
+    """
+    Convenience function for plots.
+    """
+    if filename:
+        plt.savefig(filename,dpi=400)
+    else:
+        plt.show()
+
