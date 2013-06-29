@@ -886,5 +886,6 @@ def maybesave(filename):
     """
     if filename:
         plt.savefig(filename,dpi=400)
+        plt.close()
     else:
         plt.show()
