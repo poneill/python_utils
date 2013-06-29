@@ -1,4 +1,4 @@
-import random
+}}import random
 from math import sqrt,log,exp,pi,sin,cos,gamma
 from collections import Counter
 from matplotlib import pyplot as plt
@@ -877,6 +877,10 @@ def unflip_motif(motif):
     return mutable_motif
 
 
+def hello_world():
+    print "hello, world!"
+
+
 def interpolate(start,stop,steps):
     return [start + i*(stop-start)/float(steps-1) for i in range(steps)]
 
@@ -889,3 +893,4 @@ def maybesave(filename):
         plt.close()
     else:
         plt.show()
+
