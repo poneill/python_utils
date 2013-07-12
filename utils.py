@@ -1,4 +1,4 @@
-}}import random
+import random
 from math import sqrt,log,exp,pi,sin,cos,gamma
 from collections import Counter
 from matplotlib import pyplot as plt
@@ -88,17 +88,21 @@ def entropy(xs,correct=True,alphabet_size=None):
     #print "correction:",correction
     return h(ps) + correction
 
-def dna_entropy(xs):
+def dna_entropy(xs,correct=True):
     """compute entropy (in bits) of a DNA sample"""
     ps = frequencies(xs)
     correction = (3)/(2*log(2)*len(xs)) #Basharin 1959
     #print "correction:",correction
-    return h(ps) + correction
+    return h(ps) + correction if correct else 0
 
 def motif_entropy(motif,correct=True):
     """Return the entropy of a motif, assuming independence"""
-    return sum(map(lambda col:dna_entropy(col),
+    return sum(map(lambda col:dna_entropy(col,correct=correct),
                    transpose(motif)))
+
+def columnwise_ic(motif,correct=True):
+    return map(lambda col:2-dna_entropy(col,correct=correct),
+                   transpose(motif))
 
 def motif_ic(motif,correct=True):
     """Return the entropy of a motif, assuming independence and a
@@ -598,6 +602,20 @@ def total_motif_mi(motif):
 def random_site(n):
     return "".join(random.choice("ACGT") for i in range(n))
 
+def random_motif(length,num_sites):
+    return [random_site(length) for i in range(num_sites)]
+
+def mutate_site(site):
+    i = random.randrange(len(site))
+    b = site[i]
+    new_b = random.choice([c for c in "ACGT" if not c == b])
+    return subst(site,new_b,i)
+
+def mutate_motif(motif):
+    i = random.randrange(len(motif))
+    return [site if j!=i else mutate_site(site)
+            for j,site in enumerate(motif)]
+    
 print "loaded utils anew"
 
 def get_ecoli_genome(at_lab=True):
@@ -689,6 +707,13 @@ def generate_greedy_motif_with_ic(desired_ic,epsilon,num_seqs,length,verbose=Fal
             print ic
     return motif
 
+def sa_motif_with_desired_ic(desired_ic,epsilon,num_seqs,length,verbose=False):
+    f = lambda motif:abs((motif_ic(motif))-desired_ic)
+    proposal = mutate_motif
+    x0=random_motif(length,num_seqs)
+    xs = anneal(f,proposal,x0,stopping_crit=epsilon)
+    return xs[-1]
+    
 def first(x):
     return x[0]
 
@@ -710,15 +735,18 @@ def cv(data,k=10,randomize=True):
     chunks = group_into(data_copy,k)
     return [(concat(omit(chunks,i)),chunks[i]) for i in range(k)]
 
-def acf(xs,max_lag=None):
+def acf(xs,min_lag=None,max_lag=None,verbose=False):
     """Compute the auto-correlation naively"""
     n = len(xs)
+    if min_lag is None:
+        min_lag = 0
     if max_lag is None:
         max_lag = n/2
     mu = mean(xs)
     sigma_sq = variance(xs)
+    ts = verbose_gen(xrange(min_lag,max_lag)) if verbose else xrange(min_lag,max_lag)
     return [mean([(xs[i] - mu) * (xs[i+t]-mu)/sigma_sq for i in range(n-t)])
-            for t in range(max_lag)]
+            for t in ts]
 
 def rslice(xs,js):
     return [xs[j] for j in js]
@@ -885,6 +913,62 @@ def maybesave(filename):
     """
     if filename:
         plt.savefig(filename,dpi=400)
+        plt.close()
     else:
         plt.show()
 
+def mh(f,proposal,x0,iterations=50000,every=1,verbose=False):
+    """General purpose Metropolis-Hastings sampler."""
+    x = x0
+    xs = [x]
+    fx = f(x)
+    acceptances = 0
+    for i in xrange(iterations):
+        if i % 1000 == 0:
+            print i
+        x_new = proposal(x)
+        fx_new = f(x_new)
+        ratio = fx_new/fx
+        if ratio > random.random():
+            #print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,"accepting"
+            x = x_new
+            fx = fx_new
+            acceptances += 1
+        if i % every == 0:
+            xs.append(x)
+    print "Acceptance Ratio:",acceptances/float(iterations)
+    return xs
+
+def anneal(f,proposal,x0,iterations=50000,verbose=False,stopping_crit=None):
+    """General purpose simulated annealing: minimize f."""
+    x = x0
+    xs = [x]
+    fx = f(x)
+    acceptances = 0
+    for i in xrange(iterations):
+        if i % 1000 == 0:
+            print i
+        x_new = proposal(x)
+        fx_new = f(x_new)
+        T = 1/float(i+1)
+        ratio = exp((1/T * (fx-fx_new)))
+        #print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,"Temperature:",T
+        if ratio > random.random():
+            x = x_new
+            fx = fx_new
+            acceptances += 1
+        xs.append(x)
+        if fx < stopping_crit:
+            print "Acceptance Ratio:",acceptances/float(iterations)
+            return xs
+    raise(Exception("Failed to anneal"))
+
+def gini(xs):
+    ys = sorted(xs)
+    n = float(len(ys))
+    return (2*sum((i+1)*y for i,y in enumerate(ys)))/(n*sum(ys)) - (n+1)/n
+
+def motif_gini(motif):
+    """Return the gini coefficient of the column ics"""
+    return gini(columnwise_ic(motif))
+    
