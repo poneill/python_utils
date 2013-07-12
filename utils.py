@@ -876,11 +876,6 @@ def unflip_motif(motif):
             mutable_motif[i] = wc(site)
     return mutable_motif
 
-
-def hello_world():
-    print "hello, world!"
-
-
 def interpolate(start,stop,steps):
     return [start + i*(stop-start)/float(steps-1) for i in range(steps)]
 
