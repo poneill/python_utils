@@ -93,7 +93,7 @@ def dna_entropy(xs,correct=True):
     ps = frequencies(xs)
     correction = (3)/(2*log(2)*len(xs)) #Basharin 1959
     #print "correction:",correction
-    return h(ps) + correction if correct else 0
+    return h(ps) + (correction if correct else 0)
 
 def motif_entropy(motif,correct=True):
     """Return the entropy of a motif, assuming independence"""
@@ -711,8 +711,7 @@ def sa_motif_with_desired_ic(desired_ic,epsilon,num_seqs,length,verbose=False):
     f = lambda motif:abs((motif_ic(motif))-desired_ic)
     proposal = mutate_motif
     x0=random_motif(length,num_seqs)
-    xs = anneal(f,proposal,x0,stopping_crit=epsilon)
-    return xs[-1]
+    return anneal(f,proposal,x0,stopping_crit=epsilon,verbose=verbose)
     
 def first(x):
     return x[0]
@@ -944,10 +943,14 @@ def mh(f,proposal,x0,iterations=50000,every=1,verbose=False):
     print "Acceptance Ratio:",acceptances/float(iterations)
     return xs
 
-def anneal(f,proposal,x0,iterations=50000,verbose=False,stopping_crit=None):
-    """General purpose simulated annealing: minimize f."""
+def anneal(f,proposal,x0,iterations=50000,verbose=False,stopping_crit=None,
+           return_trajectory=False,raise_exception_on_failure=False):
+    """General purpose simulated annealing: minimize f, returning
+    trajectory of xs.  stopping_crit is a constant such that x is
+    returned if f(x) < stopping_crit"""
     x = x0
-    xs = [x]
+    if return_trajectory:
+        xs = [x]
     fx = f(x)
     acceptances = 0
     for i in xrange(iterations):
@@ -962,11 +965,17 @@ def anneal(f,proposal,x0,iterations=50000,verbose=False,stopping_crit=None):
             x = x_new
             fx = fx_new
             acceptances += 1
-        xs.append(x)
+        if return_trajectory:
+            xs.append(x)
         if fx < stopping_crit:
             print "Acceptance Ratio:",acceptances/float(iterations)
-            return xs
-    raise(Exception("Failed to anneal"))
+            return xs if return_trajectory else x
+    # if we did not ever satisfy the stopping criterion...
+    if raise_exception_on_failure:
+        raise(Exception("Failed to anneal"))
+    else:
+        return xs if return_trajectory else x
+    
 
 def gini(xs):
     ys = sorted(xs)
@@ -976,4 +985,19 @@ def gini(xs):
 def motif_gini(motif):
     """Return the gini coefficient of the column ics"""
     return gini(columnwise_ic(motif))
+    
+def motif_kl(motif1,motif2,pseudocount=1/4.0):
+    """Return Kullbeck-Leibler divergence of two motifs, assuming
+    independence between columns"""
+    n = float(len(motif1))
+    assert(n == len(motif2) and len(motif1[0]) == len(motif2[0]))
+    ps = [[(col.count(b) + pseudocount)/n for b in "ACGT"] for col in transpose(motif1)]
+    qs = [[(col.count(b) + pseudocount)/n for b in "ACGT"] for col in transpose(motif2)]
+    return sum([pj*log2(pj/qj)
+                for p,q in zip(ps,qs)
+                for pj,qj in zip(p,q)
+                if pj or qj])
+    
+    
+
     
