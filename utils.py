@@ -256,7 +256,7 @@ def choose(n,k):
     return fac(n)/(fac(k) * fac(n-k))
 
 def concat(xxs):
-    return sum(xxs,[])
+    return [x for xs in xxs for x in xs]
 
 def mmap(f,xxs):
     return [map(f,xs) for xs in xxs]
