@@ -252,8 +252,11 @@ def foldl1(f,xs):
 def fac(n):
     return gamma(n+1)
 
-def choose(n,k):
+def choose_reference(n,k):
     return fac(n)/(fac(k) * fac(n-k)) if n >= k else 0
+
+def choose(n,k):
+    return product((n-(k-i))/float(i) for i in range(1,k+1))
 
 def concat(xxs):
     return [x for xs in xxs for x in xs]
