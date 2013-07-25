@@ -253,7 +253,7 @@ def fac(n):
     return gamma(n+1)
 
 def choose(n,k):
-    return fac(n)/(fac(k) * fac(n-k))
+    return fac(n)/(fac(k) * fac(n-k)) if n >= k else 0
 
 def concat(xxs):
     return [x for xs in xxs for x in xs]
