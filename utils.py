@@ -40,10 +40,10 @@ def sd(xs,correct=True):
 def se(xs,correct=True):
     return sd(xs,correct)/sqrt(len(xs))
 
-def ci(xs):
+def mean_ci(xs):
     """Return 95% CI for mean"""
     mu = mean(xs)
-    s = se(xs)
+    s = 1.96 * se(xs)
     return (mu - s,mu + s)
     
 def coev(xs,correct=True):
@@ -927,19 +927,27 @@ def mh(f,proposal,x0,iterations=50000,every=1,verbose=False):
     xs = [x]
     fx = f(x)
     acceptances = 0
+    proposed_improvements = 0
     for i in xrange(iterations):
         if i % 1000 == 0:
-            print i
+            print i,fx
         x_new = proposal(x)
         fx_new = f(x_new)
         ratio = fx_new/fx
         if ratio > random.random():
-            #print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,"accepting"
+            if verbose:
+                comp = cmp(fx_new,fx)
+                characterization = {1:"improvement",0:"stasis",-1:"worsening"}[comp]
+                if comp == 1:
+                    proposed_improvements += 1
+                print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,characterization
             x = x_new
             fx = fx_new
             acceptances += 1
         if i % every == 0:
             xs.append(x)
+    if verbose:
+        print "Proposed improvement ratio:",proposed_improvements/float(iterations)
     print "Acceptance Ratio:",acceptances/float(iterations)
     return xs
 
