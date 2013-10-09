@@ -1,5 +1,6 @@
 import random
-from math import sqrt,log,exp,pi,sin,cos,gamma
+from math import sqrt,log,exp,pi,sin,cos,gamma,acos
+from mpmath import mpf
 from collections import Counter
 from matplotlib import pyplot as plt
 epsilon = 10**-100
@@ -70,7 +71,7 @@ def unique(xs):
 def verbose_gen(xs,modulus=1):
     for i,x in enumerate(xs):
         if not i % modulus:
-            print i
+            print "%s\r" % i,
         yield x
         
 def h(ps):
@@ -426,7 +427,7 @@ def sign(x):
     else:
         return 0
     
-def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
+def bisect_interval_ref(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
     if verbose:
         print xmin,xmax,ymin,ymax
     if ymin is None:
@@ -445,6 +446,28 @@ def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=Fals
         else:
             return bisect_interval(f,xmin,x,ymin=ymin,ymax=y,
                                    tolerance=tolerance,verbose=verbose)
+
+def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
+    if ymin is None:
+        ymin = f(xmin)
+    if ymax is None:
+        ymax = f(xmax)
+    assert(sign(ymin)!= sign(ymax)), "ymin=%s,ymax=%s" % (ymin,ymax)
+    x = (xmin + xmax)/2.0
+    y = f(x)
+    while abs(y) > tolerance:
+        if verbose:
+            print xmin,xmax,ymin,ymax
+        x = (xmin + xmax)/2.0
+        y = f(x)
+        if sign(y) == sign(ymin):
+            xmin = x
+            ymin = y
+        else:
+            xmax = x
+            ymax = y
+    return x
+            
 
 def secant_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10):
     #print xmin,xmax,ymin,ymax
@@ -676,7 +699,6 @@ def inverse_cdf_sample(xs,ps):
         acc += p
         if acc > r:
             return x
-            
 
 def pl(f,xs):
     """A convenience function for plotting.
@@ -967,8 +989,9 @@ def anneal(f,proposal,x0,iterations=50000,verbose=False,stopping_crit=None,
         x_new = proposal(x)
         fx_new = f(x_new)
         T = 1/float(i+1)
-        ratio = exp((1/T * (fx-fx_new)))
-        #print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,"Temperature:",T
+        ratio = exp(1/T * (fx-fx_new))
+        if verbose:
+            print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,"Temperature:",T
         if ratio > random.random():
             x = x_new
             fx = fx_new
@@ -1005,7 +1028,19 @@ def motif_kl(motif1,motif2,pseudocount=1/4.0):
                 for p,q in zip(ps,qs)
                 for pj,qj in zip(p,q)
                 if pj or qj])
-    
-    
 
+def column_distance(col1,col2):
+    m = float(len(col1))
+    n = float(len(col2))
+    assert m == n
+    def freqs(col):
+        return (col.count('A')/n,col.count('C')/n,col.count('G')/n,col.count('T')/n)
+    freqs1 = freqs(col1)
+    freqs2 = freqs(col2)
+    return 2*n**(1/2.0)*acos((sum((p1*p2)**(1/2.0) for p1,p2 in zip(freqs1,freqs2)))-10**-50)
+
+def motif_distance(motif1,motif2):
+    cols1 = transpose(motif1)
+    cols2 = transpose(motif2)
+    return norm(zipWith(column_distance,cols1,cols2))
     
