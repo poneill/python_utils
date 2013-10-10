@@ -1,5 +1,6 @@
 import random
-from math import sqrt,log,exp,pi,sin,cos,gamma
+from math import sqrt,log,exp,pi,sin,cos,gamma,acos
+from mpmath import mpf
 from collections import Counter
 from matplotlib import pyplot as plt
 epsilon = 10**-100
@@ -40,10 +41,10 @@ def sd(xs,correct=True):
 def se(xs,correct=True):
     return sd(xs,correct)/sqrt(len(xs))
 
-def ci(xs):
+def mean_ci(xs):
     """Return 95% CI for mean"""
     mu = mean(xs)
-    s = se(xs)
+    s = 1.96 * se(xs)
     return (mu - s,mu + s)
     
 def coev(xs,correct=True):
@@ -82,7 +83,7 @@ def unique(xs):
 def verbose_gen(xs,modulus=1):
     for i,x in enumerate(xs):
         if not i % modulus:
-            print i
+            print "%s\r" % i,
         yield x
         
 def h(ps):
@@ -105,7 +106,7 @@ def dna_entropy(xs,correct=True):
     ps = frequencies(xs)
     correction = (3)/(2*log(2)*len(xs)) #Basharin 1959
     #print "correction:",correction
-    return h(ps) + correction if correct else 0
+    return h(ps) + (correction if correct else 0)
 
 def motif_entropy(motif,correct=True):
     """Return the entropy of a motif, assuming independence"""
@@ -441,7 +442,7 @@ def sign(x):
     else:
         return 0
     
-def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
+def bisect_interval_ref(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
     if verbose:
         print xmin,xmax,ymin,ymax
     if ymin is None:
@@ -460,6 +461,28 @@ def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=Fals
         else:
             return bisect_interval(f,xmin,x,ymin=ymin,ymax=y,
                                    tolerance=tolerance,verbose=verbose)
+
+def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
+    if ymin is None:
+        ymin = f(xmin)
+    if ymax is None:
+        ymax = f(xmax)
+    assert(sign(ymin)!= sign(ymax)), "ymin=%s,ymax=%s" % (ymin,ymax)
+    x = (xmin + xmax)/2.0
+    y = f(x)
+    while abs(y) > tolerance:
+        if verbose:
+            print xmin,xmax,ymin,ymax
+        x = (xmin + xmax)/2.0
+        y = f(x)
+        if sign(y) == sign(ymin):
+            xmin = x
+            ymin = y
+        else:
+            xmax = x
+            ymax = y
+    return x
+            
 
 def secant_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10):
     #print xmin,xmax,ymin,ymax
@@ -691,7 +714,6 @@ def inverse_cdf_sample(xs,ps):
         acc += p
         if acc > r:
             return x
-            
 
 def pl(f,xs):
     """A convenience function for plotting.
@@ -726,8 +748,7 @@ def sa_motif_with_desired_ic(desired_ic,epsilon,num_seqs,length,verbose=False):
     f = lambda motif:abs((motif_ic(motif))-desired_ic)
     proposal = mutate_motif
     x0=random_motif(length,num_seqs)
-    xs = anneal(f,proposal,x0,stopping_crit=epsilon)
-    return xs[-1]
+    return anneal(f,proposal,x0,stopping_crit=epsilon,verbose=verbose)
     
 def first(x):
     return x[0]
@@ -938,26 +959,38 @@ def mh(f,proposal,x0,iterations=50000,every=1,verbose=False):
     xs = [x]
     fx = f(x)
     acceptances = 0
+    proposed_improvements = 0
     for i in xrange(iterations):
         if i % 1000 == 0:
-            print i
+            print i,fx
         x_new = proposal(x)
         fx_new = f(x_new)
         ratio = fx_new/fx
         if ratio > random.random():
-            #print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,"accepting"
+            if verbose:
+                comp = cmp(fx_new,fx)
+                characterization = {1:"improvement",0:"stasis",-1:"worsening"}[comp]
+                if comp == 1:
+                    proposed_improvements += 1
+                print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,characterization
             x = x_new
             fx = fx_new
             acceptances += 1
         if i % every == 0:
             xs.append(x)
+    if verbose:
+        print "Proposed improvement ratio:",proposed_improvements/float(iterations)
     print "Acceptance Ratio:",acceptances/float(iterations)
     return xs
 
-def anneal(f,proposal,x0,iterations=50000,verbose=False,stopping_crit=None):
-    """General purpose simulated annealing: minimize f."""
+def anneal(f,proposal,x0,iterations=50000,verbose=False,stopping_crit=None,
+           return_trajectory=False,raise_exception_on_failure=False):
+    """General purpose simulated annealing: minimize f, returning
+    trajectory of xs.  stopping_crit is a constant such that x is
+    returned if f(x) < stopping_crit"""
     x = x0
-    xs = [x]
+    if return_trajectory:
+        xs = [x]
     fx = f(x)
     acceptances = 0
     T = 1
@@ -967,17 +1000,24 @@ def anneal(f,proposal,x0,iterations=50000,verbose=False,stopping_crit=None):
         x_new = proposal(x)
         fx_new = f(x_new)
         T = 1/float(i+1)
-        ratio = exp((1/T * (fx-fx_new)))
-        #print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,"Temperature:",T
+        ratio = exp(1/T * (fx-fx_new))
+        if verbose:
+            print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,"Temperature:",T
         if ratio > random.random():
             x = x_new
             fx = fx_new
             acceptances += 1
-        xs.append(x)
+        if return_trajectory:
+            xs.append(x)
         if fx < stopping_crit:
             print "Acceptance Ratio:",acceptances/float(iterations)
-            return xs
-    raise(Exception("Failed to anneal"))
+            return xs if return_trajectory else x
+    # if we did not ever satisfy the stopping criterion...
+    if raise_exception_on_failure:
+        raise(Exception("Failed to anneal"))
+    else:
+        return xs if return_trajectory else x
+    
 
 def gini(xs):
     ys = sorted(xs)
@@ -987,4 +1027,31 @@ def gini(xs):
 def motif_gini(motif):
     """Return the gini coefficient of the column ics"""
     return gini(columnwise_ic(motif))
+    
+def motif_kl(motif1,motif2,pseudocount=1/4.0):
+    """Return Kullbeck-Leibler divergence of two motifs, assuming
+    independence between columns"""
+    n = float(len(motif1))
+    assert(n == len(motif2) and len(motif1[0]) == len(motif2[0]))
+    ps = [[(col.count(b) + pseudocount)/n for b in "ACGT"] for col in transpose(motif1)]
+    qs = [[(col.count(b) + pseudocount)/n for b in "ACGT"] for col in transpose(motif2)]
+    return sum([pj*log2(pj/qj)
+                for p,q in zip(ps,qs)
+                for pj,qj in zip(p,q)
+                if pj or qj])
+
+def column_distance(col1,col2):
+    m = float(len(col1))
+    n = float(len(col2))
+    assert m == n
+    def freqs(col):
+        return (col.count('A')/n,col.count('C')/n,col.count('G')/n,col.count('T')/n)
+    freqs1 = freqs(col1)
+    freqs2 = freqs(col2)
+    return 2*n**(1/2.0)*acos((sum((p1*p2)**(1/2.0) for p1,p2 in zip(freqs1,freqs2)))-10**-50)
+
+def motif_distance(motif1,motif2):
+    cols1 = transpose(motif1)
+    cols2 = transpose(motif2)
+    return norm(zipWith(column_distance,cols1,cols2))
     
