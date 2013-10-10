@@ -60,10 +60,22 @@ def normalize(xs):
     total = float(sum(xs))
     return [x/total for x in xs]
 
-def frequencies(xs):
+def frequencies_ref(xs):
     length = float(len(xs))
     return [xs.count(x)/length for x in set(xs)]
 
+def frequencies(xs):
+    length = 0
+    counts = {}
+    for x in xs:
+        if not x in counts:
+            counts[x] = 1
+        else:
+            counts[x] += 1
+        length += 1
+    length = float(length)
+    return [count/length for count in counts.values()]
+            
 def unique(xs):
     return list(set(xs))
 
@@ -948,9 +960,10 @@ def anneal(f,proposal,x0,iterations=50000,verbose=False,stopping_crit=None):
     xs = [x]
     fx = f(x)
     acceptances = 0
+    T = 1
     for i in xrange(iterations):
         if i % 1000 == 0:
-            print i
+            print i,fx,T
         x_new = proposal(x)
         fx_new = f(x_new)
         T = 1/float(i+1)
