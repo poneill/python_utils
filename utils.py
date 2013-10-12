@@ -3,6 +3,7 @@ from math import sqrt,log,exp,pi,sin,cos,gamma,acos
 from mpmath import mpf
 from collections import Counter
 from matplotlib import pyplot as plt
+import sys
 epsilon = 10**-100
 
 def log2(x):
@@ -72,6 +73,7 @@ def verbose_gen(xs,modulus=1):
     for i,x in enumerate(xs):
         if not i % modulus:
             print "%s\r" % i,
+            sys.stdout.flush()
         yield x
         
 def h(ps):
