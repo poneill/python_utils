@@ -1066,3 +1066,15 @@ def pred_obs(xys,label=None,color='b',show=True):
     if show:
         plt.show()
     
+def score(matrix,seq,ns=False):
+    """Score a sequence with a motif."""
+    base_dict = {'A':0,'C':1,'G':2,'T':3}
+    ns_binding_const = -8 #kbt
+    #specific_binding = sum([row[base_dict[b]] for row,b in zip(matrix,seq)])
+    specific_binding = 0
+    for i in xrange(len(matrix)):        
+        specific_binding += matrix[i][base_dict[seq[i]]]
+    if ns:
+        return log(exp(-beta*specific_binding) + exp(-beta*ns_binding_const))/-beta
+    else:
+        return specific_binding            
