@@ -1062,7 +1062,7 @@ def pred_obs(xys,label=None,color='b',show=True):
     minval = min(xs+ys)
     maxval = max(xs+ys)
     plt.scatter(xs,ys)
-    plt.plot([minval,minval],[maxval,maxval])
+    plt.plot([minval,maxval],[minval,maxval])
     if show:
         plt.show()
     
