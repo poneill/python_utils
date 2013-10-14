@@ -1057,3 +1057,12 @@ def motif_distance(motif1,motif2):
     cols2 = transpose(motif2)
     return norm(zipWith(column_distance,cols1,cols2))
     
+def pred_obs(xys,label=None,color='b',show=True):
+    xs,ys = transpose(xys)
+    minval = min(xs+ys)
+    maxval = max(xs+ys)
+    plt.scatter(xs,ys)
+    plt.plot([minval,minval],[maxval,maxval])
+    if show:
+        plt.show()
+    
