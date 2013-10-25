@@ -675,10 +675,10 @@ def subst(xs,ys,i):
         ys = [ys]
     return xs[:i] + ys + xs[i+len(ys):]
 
-def cumsum(xs):
+def cumsum_ref(xs):
     return [sum(xs[:i+1]) for i in range(len(xs))]
 
-def fast_cumsum(xs):
+def cumsum(xs):
     acc = 0
     acc_list = []
     for x in xs:
@@ -1061,7 +1061,7 @@ def pred_obs(xys,label=None,color='b',show=True):
     xs,ys = transpose(xys)
     minval = min(xs+ys)
     maxval = max(xs+ys)
-    plt.scatter(xs,ys)
+    plt.scatter(xs,ys,color=color)
     plt.plot([minval,maxval],[minval,maxval])
     if show:
         plt.show()
