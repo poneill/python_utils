@@ -1086,4 +1086,4 @@ def score(matrix,seq,ns=False):
         return log(exp(-beta*specific_binding) + exp(-beta*ns_binding_const))/-beta
     else:
         return specific_binding            
->>>>>>> f1cbac34c4e8103aa4e084504d72aa9ce348b399
+
