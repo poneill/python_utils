@@ -10,7 +10,15 @@ def log2(x):
     return log(x,2)
 
 def mean(xs):
-    return sum(xs)/float(len(xs))
+    if hasattr(xs,"__len__"):
+        return sum(xs)/float(len(xs))
+    else:
+        acc = 0
+        n = 0
+        for x in xs:
+            acc += x
+            n += 1
+        return acc/float(n)
 
 def geo_mean(xs):
     return product(xs)**(1.0/len(xs))
