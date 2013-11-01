@@ -3,6 +3,7 @@ from math import sqrt,log,exp,pi,sin,cos,gamma,acos
 from mpmath import mpf
 from collections import Counter
 from matplotlib import pyplot as plt
+import sys
 epsilon = 10**-100
 
 def log2(x):
@@ -84,6 +85,7 @@ def verbose_gen(xs,modulus=1):
     for i,x in enumerate(xs):
         if not i % modulus:
             print "%s\r" % i,
+            sys.stdout.flush()
         yield x
         
 def h(ps):
@@ -1055,9 +1057,25 @@ def motif_distance(motif1,motif2):
     cols2 = transpose(motif2)
     return norm(zipWith(column_distance,cols1,cols2))
     
-def pred_obs(xys,label=None,color='b'):
+def pred_obs(xys,label=None,color='b',show=True):
     xs,ys = transpose(xys)
-    min_val = min(xs + ys)
-    max_val = max(xs + ys)
-    plt.scatter(xs,ys,label=label,color=color)
-    plt.plot([min_val,max_val],[min_val,max_val])
+    minval = min(xs+ys)
+    maxval = max(xs+ys)
+    plt.scatter(xs,ys)
+    plt.plot([minval,maxval],[minval,maxval])
+    if show:
+        plt.show()
+    
+def score(matrix,seq,ns=False):
+    """Score a sequence with a motif."""
+    base_dict = {'A':0,'C':1,'G':2,'T':3}
+    ns_binding_const = -8 #kbt
+    #specific_binding = sum([row[base_dict[b]] for row,b in zip(matrix,seq)])
+    specific_binding = 0
+    for i in xrange(len(matrix)):        
+        specific_binding += matrix[i][base_dict[seq[i]]]
+    if ns:
+        return log(exp(-beta*specific_binding) + exp(-beta*ns_binding_const))/-beta
+    else:
+        return specific_binding            
+>>>>>>> f1cbac34c4e8103aa4e084504d72aa9ce348b399
