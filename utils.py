@@ -1087,3 +1087,5 @@ def score(matrix,seq,ns=False):
     else:
         return specific_binding            
 
+def mapdict(d,xs):
+    return [d[x] for d in xs]
