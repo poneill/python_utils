@@ -186,7 +186,7 @@ def group_into(xs,n):
     #assert(set(concat(chunks)) == set(xs))
     return chunks
     
-def split_on(xs, pred):
+def split_on(pred, xs):
     """Split xs into a list of lists each beginning with the next x
     satisfying pred, except possibly the first"""
     indices = [i for (i,v) in enumerate(xs) if pred(v)]
