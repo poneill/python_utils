@@ -175,7 +175,7 @@ def round_up(x):
 
 def group_by(xs,n):
     chunks = [xs[i:i+n] for i in range(0,len(xs),n)]
-    assert(xs == concat(chunks))
+    assert(xs == "".join(chunks))
     return chunks
 
 def group_into(xs,n):
