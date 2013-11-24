@@ -1088,4 +1088,4 @@ def score(matrix,seq,ns=False):
         return specific_binding            
 
 def mapdict(d,xs):
-    return [d[x] for d in xs]
+    return [d[x] for x in xs]
