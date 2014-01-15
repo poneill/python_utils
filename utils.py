@@ -10,7 +10,7 @@ def log2(x):
     return log(x,2)
 
 def mean(xs):
-    if type(xs) is list:
+    if hasattr(xs,"__len__"):
         return sum(xs)/float(len(xs))
     else:
         acc = 0
@@ -208,7 +208,7 @@ def round_up(x):
 
 def group_by(xs,n):
     chunks = [xs[i:i+n] for i in range(0,len(xs),n)]
-    assert(xs == concat(chunks))
+    assert(xs == "".join(chunks))
     return chunks
 
 def group_into(xs,n):
@@ -219,7 +219,7 @@ def group_into(xs,n):
     #assert(set(concat(chunks)) == set(xs))
     return chunks
     
-def split_on(xs, pred):
+def split_on(pred, xs):
     """Split xs into a list of lists each beginning with the next x
     satisfying pred, except possibly the first"""
     indices = [i for (i,v) in enumerate(xs) if pred(v)]
@@ -1118,10 +1118,14 @@ def score(matrix,seq,ns=False):
     if ns:
         return log(exp(-beta*specific_binding) + exp(-beta*ns_binding_const))/-beta
     else:
-        return specific_binding            
-
+        return specific_binding
+    
 def uncurry(f):
     """
     (a -> b -> c) -> (a, b) -> c
     """
     return lambda (a,b):f(a,b)
+
+def mapdict(d,xs):
+    return [d[x] for x in xs]
+
