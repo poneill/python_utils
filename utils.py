@@ -10,7 +10,23 @@ def log2(x):
     return log(x,2)
 
 def mean(xs):
-    return sum(xs)/float(len(xs))
+    if type(xs) is list:
+        return sum(xs)/float(len(xs))
+    else:
+        acc = 0
+        n = 0
+        for x in xs:
+            acc += x
+            n += 1
+        return acc/float(n)
+
+def mean_imp(xs):
+    acc = 0
+    n = 0
+    for x in xs:
+        acc += x
+        n += 1
+    return acc/float(n)
 
 def geo_mean(xs):
     return product(xs)**(1.0/len(xs))
@@ -125,13 +141,34 @@ def motif_ic(motif,correct=True):
     site_length = len(motif[0])
     return 2 * site_length - motif_entropy(motif,correct=correct)
 
-def mi(xs,ys):
+def mi(xs,ys,correct=True):
     """Compute mutual information (in bits) of samples from two
     categorical probability distributions"""
-    hx  = entropy(xs)
-    hy  = entropy(ys)
-    hxy = entropy(zip(xs,ys))
+    hx  = entropy(xs,correct=correct)
+    hy  = entropy(ys,correct=correct)
+    hxy = entropy(zip(xs,ys),correct=correct)
     return hx + hy - hxy
+
+def dna_mi(xs,ys):
+    """Compute mutual information (in bits) of samples from two
+    nucleotide distributions, correcting for undersampling in entropy
+    calculation."""
+    hx = dna_entropy(xs)
+    hy = dna_entropy(ys)
+    hxy = entropy(zip(xs,ys),correct=True,alphabet_size=16)
+    return hx + hy - hxy
+
+def dna_mi2(xs,ys):
+    """Compute mutual information (in bits) of samples from two
+    nucleotide distributions, correcting for undersampling in entropy
+    calculation."""
+    hx = entropy(xs,correct=False)
+    hy = entropy(ys,correct=False)
+    hxy = entropy(zip(xs,ys),correct=False)
+    k = 16
+    n = len(xs)
+    expected_bias = (k-1)**2/float(2*n)
+    return hx + hy - hxy - expected_bias
 
 def permute(xs):
     """Return a random permutation of xs"""
@@ -141,11 +178,12 @@ def test_permute(xs):
     permutation = permute(xs)
     return all(permutation.count(x) == xs.count(x) for x in set(xs))
 
-def mi_permute(xs,ys,n=100,conf_int=False,p_value=False):
+def mi_permute(xs,ys,n=100,conf_int=False,p_value=False,zero=False,mi_method=mi):
     """For samples xs and ys, compute an expected MI value (or
-    confidence interval, or p_value for obtaining MI at least as high)
-    by computing the MI of randomly permuted columns xs and ys n times"""
-    replicates = [mi(permute(xs),permute(ys)) for i in range(n)]
+    confidence interval, a p_value for obtaining MI at least as high)
+    by computing the MI of randomly permuted columns xs and ys n
+    times, or MI(xs,ys) - the mean MI of the replicates"""
+    replicates = [mi_method(permute(xs),permute(ys)) for i in range(n)]
     if conf_int:
         replicates = sorted(replicates)
         lower,upper = (replicates[int(n*.05)],replicates[int(n*.95)])
@@ -153,8 +191,11 @@ def mi_permute(xs,ys,n=100,conf_int=False,p_value=False):
         return (lower,upper)
     elif p_value:
         replicates = sorted(replicates)
-        mi_obs = mi(xs,ys)
+        mi_obs = mi_method(xs,ys)
         return len(filter(lambda s: s >= mi_obs,replicates))/float(n)
+    elif zero:
+        mi_obs = mi_method(xs,ys)
+        return mi_obs - mean(replicates)
     else:
         return mean(replicates)
 
@@ -1078,3 +1119,9 @@ def score(matrix,seq,ns=False):
         return log(exp(-beta*specific_binding) + exp(-beta*ns_binding_const))/-beta
     else:
         return specific_binding            
+
+def uncurry(f):
+    """
+    (a -> b -> c) -> (a, b) -> c
+    """
+    return lambda (a,b):f(a,b)
