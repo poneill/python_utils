@@ -1129,3 +1129,8 @@ def uncurry(f):
 def mapdict(d,xs):
     return [d[x] for x in xs]
 
+def simplex_sample(n):
+    """Sample uniformly from the probability simplex with n-components"""
+    xs = [0] + sorted([random.random() for i in range(n-1)]) + [1]
+    diffs = [x2-x1 for (x1,x2) in pairs xs]
+    return diffs
