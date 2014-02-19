@@ -1026,23 +1026,31 @@ def mh(f,proposal,x0,iterations=50000,every=1,verbose=False):
     print "Acceptance Ratio:",acceptances/float(iterations)
     return xs
 
-def anneal(f,proposal,x0,iterations=50000,verbose=False,stopping_crit=None,
+def anneal(f,proposal,x0,iterations=50000,k=1,verbose=False,stopping_crit=None,
            return_trajectory=False,raise_exception_on_failure=False):
     """General purpose simulated annealing: minimize f, returning
     trajectory of xs.  stopping_crit is a constant such that x is
-    returned if f(x) < stopping_crit"""
+    returned if f(x) < stopping_crit.  k is a cooling constant; higher
+    values of k result in faster cooling."""
     x = x0
+    x_min = x
+    f_min = f(x)
     if return_trajectory:
         xs = [x]
     fx = f(x)
     acceptances = 0
     T = 1
+    def get_temp(it):
+        """Return temp for given iteration"""
+        T0 = 1
+        tf = 0
+        return tf + T0*exp(-k*it)
     for i in xrange(iterations):
         if i % 1000 == 0:
             print i,fx,T
         x_new = proposal(x)
         fx_new = f(x_new)
-        T = 1/float(i+1)
+        T = get_temp(i)
         ratio = exp(1/T * (fx-fx_new))
         if verbose:
             print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,"Temperature:",T
@@ -1050,16 +1058,18 @@ def anneal(f,proposal,x0,iterations=50000,verbose=False,stopping_crit=None,
             x = x_new
             fx = fx_new
             acceptances += 1
+            if fx < f_min:
+                x_min = x
         if return_trajectory:
             xs.append(x)
         if fx < stopping_crit:
             print "Acceptance Ratio:",acceptances/float(iterations)
-            return xs if return_trajectory else x
+            return xs if return_trajectory else x_min
     # if we did not ever satisfy the stopping criterion...
     if raise_exception_on_failure:
         raise(Exception("Failed to anneal"))
     else:
-        return xs if return_trajectory else x
+        return xs if return_trajectory else x_min
     
 
 def gini(xs):
