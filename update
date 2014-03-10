@@ -1,1 +1,2 @@
 sudo python setup.py install
+gu # push to remote repo!
