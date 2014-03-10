@@ -98,7 +98,7 @@ def unique(xs):
     us = []
     for x in xs:
         if not x in us:
-            us.append(xs)
+            us.append(x)
     return us
 
 def verbose_gen(xs,modulus=1):
