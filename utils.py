@@ -1,5 +1,5 @@
 import random
-from math import sqrt,log,exp,pi,sin,cos,gamma,acos
+from math import sqrt,log,exp,pi,sin,cos,gamma,acos,sqrt
 from mpmath import mpf
 from collections import Counter
 from matplotlib import pyplot as plt
@@ -95,7 +95,11 @@ def frequencies(xs):
     return [count/length for count in counts.values()]
             
 def unique(xs):
-    return list(set(xs))
+    us = []
+    for x in xs:
+        if not x in us:
+            us.append(xs)
+    return us
 
 def verbose_gen(xs,modulus=1):
     for i,x in enumerate(xs):
@@ -126,20 +130,21 @@ def dna_entropy(xs,correct=True):
     #print "correction:",correction
     return h(ps) + (correction if correct else 0)
 
-def motif_entropy(motif,correct=True):
+def motif_entropy(motif,correct=True,alphabet_size=4):
     """Return the entropy of a motif, assuming independence"""
-    return sum(map(lambda col:dna_entropy(col,correct=correct),
+    return sum(map(lambda col:entropy(col,correct=correct,alphabet_size=alphabet_size),
                    transpose(motif)))
 
 def columnwise_ic(motif,correct=True):
     return map(lambda col:2-dna_entropy(col,correct=correct),
                    transpose(motif))
 
-def motif_ic(motif,correct=True):
+def motif_ic(motif,correct=True,alphabet_size=4):
     """Return the entropy of a motif, assuming independence and a
     uniform genomic background"""
     site_length = len(motif[0])
-    return 2 * site_length - motif_entropy(motif,correct=correct)
+    return (log2(alphabet_size) * site_length -
+            motif_entropy(motif,correct=correct,alphabet_size=4))
 
 def mi(xs,ys,correct=True):
     """Compute mutual information (in bits) of samples from two
@@ -229,7 +234,7 @@ def partition_according_to(f,xs):
     """Partition xs according to f"""
     part = []
     xsys = [(x,f(x)) for x in xs]
-    yvals = set([y for (x,y) in xsys])
+    yvals = unique([y for (x,y) in xsys])
     return [[x for (x,y) in xsys if y == yval] for yval in yvals]
     
     
