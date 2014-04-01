@@ -213,7 +213,6 @@ def round_up(x):
 
 def group_by(xs,n):
     chunks = [xs[i:i+n] for i in range(0,len(xs),n)]
-    assert(xs == "".join(chunks))
     return chunks
 
 def group_into(xs,n):
@@ -221,7 +220,6 @@ def group_into(xs,n):
     chunks = [[] for __ in range(n)]
     for i,x in enumerate(xs):
         chunks[i%n].append(x)
-    #assert(set(concat(chunks)) == set(xs))
     return chunks
     
 def split_on(pred, xs):
@@ -1033,7 +1031,7 @@ def mh(f,proposal,x0,iterations=50000,every=1,verbose=False,use_log=False):
     print "Acceptance Ratio:",acceptances/float(iterations)
     return xs
 
-def anneal(f,proposal,x0,iterations=50000,k=1,verbose=False,stopping_crit=None,
+def anneal(f,proposal,x0,iterations=50000,T0=1,tf=0,k=1,verbose=False,stopping_crit=None,
            return_trajectory=False,raise_exception_on_failure=False):
     """General purpose simulated annealing: minimize f, returning
     trajectory of xs.  stopping_crit is a constant such that x is
@@ -1046,13 +1044,11 @@ def anneal(f,proposal,x0,iterations=50000,k=1,verbose=False,stopping_crit=None,
         xs = [x]
     fx = f(x)
     acceptances = 0
-    T = 1
     def get_temp(it):
         """Return temp for given iteration"""
-        T0 = 1
-        tf = 0
         return tf + T0*exp(-k*it)
     for i in xrange(iterations):
+        T = get_temp(i)
         if i % 1000 == 0:
             print i,fx,T
         x_new = proposal(x)
@@ -1124,7 +1120,7 @@ def pred_obs(xys,label=None,color='b',show=True):
     if show:
         plt.show()
     
-def score(matrix,seq,ns=False):
+def score_seq(matrix,seq,ns=False):
     """Score a sequence with a motif."""
     base_dict = {'A':0,'C':1,'G':2,'T':3}
     ns_binding_const = -8 #kbt
