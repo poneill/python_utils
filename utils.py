@@ -1001,8 +1001,9 @@ def maybesave(filename):
     else:
         plt.show()
 
-def mh(f,proposal,x0,iterations=50000,every=1,verbose=False):
-    """General purpose Metropolis-Hastings sampler."""
+def mh(f,proposal,x0,iterations=50000,every=1,verbose=False,use_log=False):
+    """General purpose Metropolis-Hastings sampler.  If use_log is
+    true, assume that f is actually log(f)"""
     x = x0
     xs = [x]
     fx = f(x)
@@ -1013,8 +1014,9 @@ def mh(f,proposal,x0,iterations=50000,every=1,verbose=False):
             print i,fx
         x_new = proposal(x)
         fx_new = f(x_new)
-        ratio = fx_new/fx
-        if ratio > random.random():
+        ratio = fx_new/fx if not use_log else (fx_new - fx)
+        r = random.random() if not use_log else log(random.random())
+        if ratio > r:
             if verbose:
                 comp = cmp(fx_new,fx)
                 characterization = {1:"improvement",0:"stasis",-1:"worsening"}[comp]
@@ -1149,3 +1151,6 @@ def simplex_sample(n):
     xs = [0] + sorted([random.random() for i in range(n-1)]) + [1]
     diffs = [x2-x1 for (x1,x2) in pairs(xs)]
     return diffs
+
+def dnorm(x,mu=0,sigma=1):
+    return 1/(sigma*sqrt(2*pi))*exp(-(x-mu)**2/(2*sigma**2))
