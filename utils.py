@@ -1,6 +1,5 @@
 import random
 from math import sqrt,log,exp,pi,sin,cos,gamma,acos,sqrt
-from mpmath import mpf
 from collections import Counter
 from matplotlib import pyplot as plt
 import sys
