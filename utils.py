@@ -351,6 +351,12 @@ def sample(n,xs,replace=True):
 def bs(xs):
     return sample(len(xs),xs,replace=True)
 
+def bs_ci(f,xs,alpha=0.05,N=1000):
+    fs = sorted([f(bs(xs)) for i in xrange(N)])
+    i = alpha/2 * N
+    j = (1 - alpha/2) * N
+    return fs[i],fs[j]
+    
 def fast_sample(n,xs):
     """Sample without replacement for large xs"""
     samp = []
