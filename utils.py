@@ -353,8 +353,8 @@ def bs(xs):
 
 def bs_ci(f,xs,alpha=0.05,N=1000):
     fs = sorted([f(bs(xs)) for i in xrange(N)])
-    i = alpha/2 * N
-    j = (1 - alpha/2) * N
+    i = int(alpha/2 * N)
+    j = int(1 - alpha/2 * N)
     return fs[i],fs[j]
     
 def fast_sample(n,xs):
@@ -635,6 +635,20 @@ def fdr(ps,alpha=0.05):
     ps = sorted(ps)
     m = len(ps)
     ks = [k for k in range(m) if ps[k]<= k/float(m)*alpha]
+    K = max(ks) if ks else None
+    return ps[K] if K else None #if none are significant
+
+def bhy(ps,alpha=0.05):
+    """Given a list of p-values of arbitrarily correlated tests and a
+    desired significance alpha, find the adjusted q-value such that a
+    p-value less than q is expected to be significant at alpha, via
+    the Benjamini-Yekutieli method.
+    """
+    ps = sorted(ps)
+    m = len(ps)
+    def c(m):
+        return sum(1.0/i for i in range(1,m+1))
+    ks = [k for k in range(m) if ps[k]<= k/(float(m)*c(m))*alpha]
     K = max(ks) if ks else None
     return ps[K] if K else None #if none are significant
 
