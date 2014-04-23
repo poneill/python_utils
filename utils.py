@@ -634,7 +634,7 @@ def fdr(ps,alpha=0.05):
     to be significant at alpha, via the Benjamini-Hochberg method."""
     ps = sorted(ps)
     m = len(ps)
-    ks = [k for k in range(m) if ps[k]<= k/float(m)*alpha]
+    ks = [k for k in range(m) if ps[k]<= (k+1)/float(m)*alpha] #k+1 because pvals are 1-indexed.
     K = max(ks) if ks else None
     return ps[K] if K else None #if none are significant
 
@@ -648,7 +648,7 @@ def bhy(ps,alpha=0.05):
     m = len(ps)
     def c(m):
         return sum(1.0/i for i in range(1,m+1))
-    ks = [k for k in range(m) if ps[k]<= k/(float(m)*c(m))*alpha]
+    ks = [k for k in range(m) if ps[k]<= (k+1)/(float(m)*c(m))*alpha] #k+1 because pvals are 1-indexed.
     K = max(ks) if ks else None
     return ps[K] if K else None #if none are significant
 
