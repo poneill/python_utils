@@ -1173,3 +1173,15 @@ def how_many(p,xs):
 def dnorm(x,mu=0,sigma=1):
     return 1/(sigma*sqrt(2*pi))*exp(-(x-mu)**2/(2*sigma**2))
 
+def take(n,xs):
+    """Return first n items of xs, or all if len(xs) < n"""
+    # We do this in a slightly stupid way in order to make this work with generators
+    i = 0
+    taken = []
+    for x in xs:
+        taken.append(x)
+        i += 1
+        if i == n:
+            break
+    return taken
+
