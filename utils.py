@@ -1018,9 +1018,11 @@ def maybesave(filename):
     else:
         plt.show()
 
-def mh(f,proposal,x0,iterations=50000,every=1,verbose=False,use_log=False):
+def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=False,use_log=False):
     """General purpose Metropolis-Hastings sampler.  If use_log is
     true, assume that f is actually log(f)"""
+    if dprop is None:
+        print "Warning: using M-H without proposal density: ensure that proposal is symmetric!"
     x = x0
     xs = [x]
     fx = f(x)
@@ -1031,8 +1033,14 @@ def mh(f,proposal,x0,iterations=50000,every=1,verbose=False,use_log=False):
             print i,fx
         x_new = proposal(x)
         fx_new = f(x_new)
-        ratio = fx_new/fx if not use_log else (fx_new - fx)
-        r = random.random() if not use_log else log(random.random())
+        if not use_log:
+            prop_ratio = dprop(x)/dprop(x_new) if dprop else 1
+            ratio = fx_new/fx*prop_ratio
+            r = random.random() 
+        else: #using log
+            prop_ratio = dprop(x) - dprop(x_new) # assume density proposal is log too!
+            ratio = (fx_new - fx) + prop_ratio
+            r = log(random.random())
         if ratio > r:
             if verbose:
                 comp = cmp(fx_new,fx)
@@ -1138,6 +1146,11 @@ def pred_obs(xys,label=None,color='b',show=True):
     plt.plot([minval,maxval],[minval,maxval])
     if show:
         plt.show()
+
+def make_pssm(seqs):
+    cols = transpose(seqs)
+    N = float(len(seqs))
+    return [[log2((col.count(b)+1)/(N+4.0)) - log2(0.25) for b in "ACGT"] for col in cols]
     
 def score_seq(matrix,seq,ns=False):
     """Score a sequence with a motif."""
@@ -1151,6 +1164,11 @@ def score_seq(matrix,seq,ns=False):
         return log(exp(-beta*specific_binding) + exp(-beta*ns_binding_const))/-beta
     else:
         return specific_binding
+
+def score_genome(matrix,genome,ns=False):
+    w = len(matrix)
+    L = len(genome)
+    return [score_seq(matrix,genome[i:i+w],ns=ns) for i in range(L-w+1)]
     
 def uncurry(f):
     """
