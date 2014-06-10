@@ -1023,6 +1023,7 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=False,use_log=F
     true, assume that f is actually log(f)"""
     if dprop is None:
         print "Warning: using M-H without proposal density: ensure that proposal is symmetric!"
+        dprop = lambda x:1
     x = x0
     xs = [x]
     fx = f(x)
