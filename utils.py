@@ -1,6 +1,5 @@
 import random
 from math import sqrt,log,exp,pi,sin,cos,gamma,acos,sqrt
-from mpmath import mpf
 from collections import Counter
 from matplotlib import pyplot as plt
 import sys
@@ -352,6 +351,12 @@ def sample(n,xs,replace=True):
 def bs(xs):
     return sample(len(xs),xs,replace=True)
 
+def bs_ci(f,xs,alpha=0.05,N=1000):
+    fs = sorted([f(bs(xs)) for i in xrange(N)])
+    i = int(alpha/2 * N)
+    j = int(1 - alpha/2 * N)
+    return fs[i],fs[j]
+    
 def fast_sample(n,xs):
     """Sample without replacement for large xs"""
     samp = []
@@ -629,7 +634,21 @@ def fdr(ps,alpha=0.05):
     to be significant at alpha, via the Benjamini-Hochberg method."""
     ps = sorted(ps)
     m = len(ps)
-    ks = [k for k in range(m) if ps[k]<= k/float(m)*alpha]
+    ks = [k for k in range(m) if ps[k]<= (k+1)/float(m)*alpha] #k+1 because pvals are 1-indexed.
+    K = max(ks) if ks else None
+    return ps[K] if K else None #if none are significant
+
+def bhy(ps,alpha=0.05):
+    """Given a list of p-values of arbitrarily correlated tests and a
+    desired significance alpha, find the adjusted q-value such that a
+    p-value less than q is expected to be significant at alpha, via
+    the Benjamini-Yekutieli method.
+    """
+    ps = sorted(ps)
+    m = len(ps)
+    def c(m):
+        return sum(1.0/i for i in range(1,m+1))
+    ks = [k for k in range(m) if ps[k]<= (k+1)/(float(m)*c(m))*alpha] #k+1 because pvals are 1-indexed.
     K = max(ks) if ks else None
     return ps[K] if K else None #if none are significant
 
@@ -1009,9 +1028,12 @@ def maybesave(filename):
     else:
         plt.show()
 
-def mh(f,proposal,x0,iterations=50000,every=1,verbose=False,use_log=False):
+def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=False,use_log=False):
     """General purpose Metropolis-Hastings sampler.  If use_log is
     true, assume that f is actually log(f)"""
+    if dprop is None:
+        print "Warning: using M-H without proposal density: ensure that proposal is symmetric!"
+        dprop = lambda x:1
     x = x0
     xs = [x]
     fx = f(x)
@@ -1022,8 +1044,14 @@ def mh(f,proposal,x0,iterations=50000,every=1,verbose=False,use_log=False):
             print i,fx
         x_new = proposal(x)
         fx_new = f(x_new)
-        ratio = fx_new/fx if not use_log else (fx_new - fx)
-        r = random.random() if not use_log else log(random.random())
+        if not use_log:
+            prop_ratio = dprop(x)/dprop(x_new) if dprop else 1
+            ratio = fx_new/fx*prop_ratio
+            r = random.random() 
+        else: #using log
+            prop_ratio = dprop(x) - dprop(x_new) # assume density proposal is log too!
+            ratio = (fx_new - fx) + prop_ratio
+            r = log(random.random())
         if ratio > r:
             if verbose:
                 comp = cmp(fx_new,fx)
@@ -1129,6 +1157,11 @@ def pred_obs(xys,label=None,color='b',show=True):
     plt.plot([minval,maxval],[minval,maxval])
     if show:
         plt.show()
+
+def make_pssm(seqs):
+    cols = transpose(seqs)
+    N = float(len(seqs))
+    return [[log2((col.count(b)+1)/(N+4.0)) - log2(0.25) for b in "ACGT"] for col in cols]
     
 def score_seq(matrix,seq,ns=False):
     """Score a sequence with a motif."""
@@ -1142,6 +1175,11 @@ def score_seq(matrix,seq,ns=False):
         return log(exp(-beta*specific_binding) + exp(-beta*ns_binding_const))/-beta
     else:
         return specific_binding
+
+def score_genome(matrix,genome,ns=False):
+    w = len(matrix)
+    L = len(genome)
+    return [score_seq(matrix,genome[i:i+w],ns=ns) for i in range(L-w+1)]
     
 def uncurry(f):
     """
@@ -1163,4 +1201,16 @@ def how_many(p,xs):
 
 def dnorm(x,mu=0,sigma=1):
     return 1/(sigma*sqrt(2*pi))*exp(-(x-mu)**2/(2*sigma**2))
+
+def take(n,xs):
+    """Return first n items of xs, or all if len(xs) < n"""
+    # We do this in a slightly stupid way in order to make this work with generators
+    i = 0
+    taken = []
+    for x in xs:
+        taken.append(x)
+        i += 1
+        if i == n:
+            break
+    return taken
 
