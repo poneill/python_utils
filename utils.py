@@ -633,6 +633,16 @@ def fdr(ps,alpha=0.05):
     K = max(ks) if ks else None
     return ps[K] if K else None #if none are significant
 
+def bhy(ps,alpha=0.05):
+    """Compute FDR using Benjamini-Hochberg-Yekutieli procedure"""
+    ps = sorted(ps)
+    m = len(ps)
+    def c(n):
+        return sum(1/float(i) for i in range(1,n+1))
+    ks = [k for k in range(m) if ps[k]<= k/(float(m)*c(m))*alpha]
+    K = max(ks) if ks else None
+    return ps[K] if K else None #if none are significant
+    
 def hamming(xs,ys):
     return sum(zipWith(lambda x,y:x!=y,xs,ys))
 
