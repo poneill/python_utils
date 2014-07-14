@@ -652,6 +652,16 @@ def bhy(ps,alpha=0.05):
     K = max(ks) if ks else None
     return ps[K] if K else None #if none are significant
 
+def bhy(ps,alpha=0.05):
+    """Compute FDR using Benjamini-Hochberg-Yekutieli procedure"""
+    ps = sorted(ps)
+    m = len(ps)
+    def c(n):
+        return sum(1/float(i) for i in range(1,n+1))
+    ks = [k for k in range(m) if ps[k]<= k/(float(m)*c(m))*alpha]
+    K = max(ks) if ks else None
+    return ps[K] if K else None #if none are significant
+    
 def hamming(xs,ys):
     return sum(zipWith(lambda x,y:x!=y,xs,ys))
 
@@ -1030,7 +1040,7 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=False,use_log=F
     true, assume that f is actually log(f)"""
     if dprop is None:
         print "Warning: using M-H without proposal density: ensure that proposal is symmetric!"
-        dprop = lambda x:1
+        dprop = lambda x_new,x:1
     x = x0
     xs = [x]
     fx = f(x)
@@ -1042,11 +1052,11 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=False,use_log=F
         x_new = proposal(x)
         fx_new = f(x_new)
         if not use_log:
-            prop_ratio = dprop(x)/dprop(x_new) if dprop else 1
+            prop_ratio = dprop(x,x_new)/dprop(x_new,x) if dprop else 1
             ratio = fx_new/fx*prop_ratio
             r = random.random() 
         else: #using log
-            prop_ratio = dprop(x) - dprop(x_new) # assume density proposal is log too!
+            prop_ratio = dprop(x,x_new) - dprop(x_new,x) # assume density proposal is log too!
             ratio = (fx_new - fx) + prop_ratio
             r = log(random.random())
         if ratio > r:
