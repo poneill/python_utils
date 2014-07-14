@@ -979,6 +979,13 @@ def head(xs, p=iota):
     filtered_xs = filter(p, xs)
     return filtered_xs[0] if filtered_xs else []
 
+def find(p,xs):
+    """return first element of xs satisfying p, or None if none do"""
+    for x in xs:
+        if p(x):
+            return x
+    return None
+    
 def product_ref(xs):
     """multiply elements of list.  Python doesn't implement TCO so
     this implementation is not safe for production.  See product."""
