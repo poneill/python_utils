@@ -1221,3 +1221,6 @@ def take(n,xs):
             break
     return taken
 
+def count(p,xs):
+    """Count number of xs satisfying p"""
+    return len(filter(p,xs))
