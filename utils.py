@@ -483,7 +483,7 @@ def takeWhile(p,xs):
         return [xs[0]] + takeWhile(p,xs[1:])
 
 def distance(xs,ys):
-    return sqrt(l2(xs,ys))
+    return l2(xs,ys)
 
 def sign(x):
     if x > 0:
