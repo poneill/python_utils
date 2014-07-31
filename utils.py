@@ -1059,13 +1059,14 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=False,use_log=F
             prop_ratio = dprop(x,x_new) - dprop(x_new,x) # assume density proposal is log too!
             ratio = (fx_new - fx) + prop_ratio
             r = log(random.random())
+        if verbose:
+            comp = cmp(fx_new,fx)
+            characterization = {1:"improvement",0:"stasis",-1:"worsening"}[comp]
+            if comp == 1:
+                proposed_improvements += 1
+            print (iteration,"fx:",fx,"fx_new:",fx_new,"ratio:",ratio,characterization,"r:",r,
+                   "accept" if ratio > r else "no accept")
         if ratio > r:
-            if verbose:
-                comp = cmp(fx_new,fx)
-                characterization = {1:"improvement",0:"stasis",-1:"worsening"}[comp]
-                if comp == 1:
-                    proposed_improvements += 1
-                print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,characterization
             x = x_new
             fx = fx_new
             acceptances += 1
