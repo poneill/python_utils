@@ -1064,8 +1064,8 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=False,use_log=F
             characterization = {1:"improvement",0:"stasis",-1:"worsening"}[comp]
             if comp == 1:
                 proposed_improvements += 1
-            print (it,"fx:",fx,"fx_new:",fx_new,"ratio:",ratio,characterization,"r:",r,
-                   "accept" if ratio > r else "no accept")
+            print it,"fx:",fx,"fx_new:",fx_new,"ratio:",ratio,characterization,"r:",r,
+                   "accept" if ratio > r else "no accept"
         if ratio > r:
             x = x_new
             fx = fx_new
