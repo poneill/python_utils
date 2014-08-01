@@ -1065,7 +1065,7 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
             if comp == 1:
                 proposed_improvements += 1
             print it,"fx:",fx,"fx_new:",fx_new,"ratio:",ratio,characterization,"r:",r,\
-                   "accept" if ratio > r else "no accept","acceptance ratio:",acceptances/float(it)
+                   "accept" if ratio > r else "no accept","acceptance ratio:",acceptances/float(max(it,1))
         if ratio > r:
             x = x_new
             fx = fx_new
