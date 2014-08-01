@@ -1035,7 +1035,7 @@ def maybesave(filename):
     else:
         plt.show()
 
-def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=False,use_log=False,capture_state=lambda x:x,modulus=1000):
+def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False,capture_state=lambda x:x,modulus=1000):
     """General purpose Metropolis-Hastings sampler.  If use_log is
     true, assume that f is actually log(f)"""
     if dprop is None:
@@ -1059,7 +1059,7 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=False,use_log=F
             prop_ratio = dprop(x,x_new) - dprop(x_new,x) # assume density proposal is log too!
             ratio = (fx_new - fx) + prop_ratio
             r = log(random.random())
-        if verbose:
+        if verbose and it % verbose == 0:
             comp = cmp(fx_new,fx)
             characterization = {1:"improvement",0:"stasis",-1:"worsening"}[comp]
             if comp == 1:
