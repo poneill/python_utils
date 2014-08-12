@@ -1046,36 +1046,39 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
     fx = f(x)
     acceptances = 0
     proposed_improvements = 0
-    for it in xrange(iterations):
-        if it % modulus == 0:
-            print it,fx
-        x_new = proposal(x)
-        fx_new = f(x_new)
-        if not use_log:
-            prop_ratio = dprop(x,x_new)/dprop(x_new,x) if dprop else 1
-            ratio = fx_new/fx*prop_ratio
-            r = random.random() 
-        else: #using log
-            prop_ratio = dprop(x,x_new) - dprop(x_new,x) # assume density proposal is log too!
-            ratio = (fx_new - fx) + prop_ratio
-            r = log(random.random())
-        if verbose and it % verbose == 0:
-            comp = cmp(fx_new,fx)
-            characterization = {1:"improvement",0:"stasis",-1:"worsening"}[comp]
-            if comp == 1:
-                proposed_improvements += 1
-            print it,"fx:",fx,"fx_new:",fx_new,"ratio:",ratio,characterization,"r:",r,\
-                   "accept" if ratio > r else "no accept","acceptance ratio:",acceptances/float(max(it,1))
-        if ratio > r:
-            x = x_new
-            fx = fx_new
-            acceptances += 1
-        if it % every == 0:
-            xs.append(capture_state(x))
-    if verbose:
-        print "Proposed improvement ratio:",proposed_improvements/float(iterations)
-    print "Acceptance Ratio:",acceptances/float(iterations)
-    return xs
+    try:
+        for it in xrange(iterations):
+            if it % modulus == 0:
+                print it,fx
+            x_new = proposal(x)
+            fx_new = f(x_new)
+            if not use_log:
+                prop_ratio = dprop(x,x_new)/dprop(x_new,x) if dprop else 1
+                ratio = fx_new/fx*prop_ratio
+                r = random.random() 
+            else: #using log
+                prop_ratio = dprop(x,x_new) - dprop(x_new,x) # assume density proposal is log too!
+                ratio = (fx_new - fx) + prop_ratio
+                r = log(random.random())
+            if verbose and it % verbose == 0:
+                comp = cmp(fx_new,fx)
+                characterization = {1:"improvement",0:"stasis",-1:"worsening"}[comp]
+                if comp == 1:
+                    proposed_improvements += 1
+                print it,"fx:",fx,"fx_new:",fx_new,"ratio:",ratio,characterization,"r:",r,\
+                       "accept" if ratio > r else "no accept","acceptance ratio:",acceptances/float(max(it,1))
+            if ratio > r:
+                x = x_new
+                fx = fx_new
+                acceptances += 1
+            if it % every == 0:
+                xs.append(capture_state(x))
+        if verbose:
+            print "Proposed improvement ratio:",proposed_improvements/float(iterations)
+        print "Acceptance Ratio:",acceptances/float(iterations)
+        return xs
+    except KeyboardInterrupt:
+        return xs
 
 def anneal(f,proposal,x0,iterations=50000,T0=1,tf=0,k=1,verbose=False,stopping_crit=None,
            return_trajectory=False,raise_exception_on_failure=False):
