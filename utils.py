@@ -2,6 +2,7 @@ import random
 from math import sqrt,log,exp,pi,sin,cos,gamma,acos,sqrt
 from collections import Counter
 from matplotlib import pyplot as plt
+import bisect
 import sys
 epsilon = 10**-100
 
@@ -1228,3 +1229,12 @@ def take(n,xs):
 def count(p,xs):
     """Count number of xs satisfying p"""
     return len(filter(p,xs))
+
+def inverse_cdf_sampler(xs,ps):
+    """make a bintree for Sampling from discrete distribution ps over set xs"""
+    cum_ps = cumsum(ps)
+    def sampler():
+        r = random.random()
+        i = bisect.bisect_left(cum_ps,r)
+        return xs[i]
+    return sampler
