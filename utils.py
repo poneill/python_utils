@@ -783,8 +783,10 @@ def inverse_cdf_reference3(xs,ps):
     P,x = min(filter(lambda (P,x):P > r,zip(PS,xs)))
     return x
 
-def inverse_cdf_sample(xs,ps):
+def inverse_cdf_sample(xs,ps,normalized=True):
     r = random.random()
+    if not normalized:
+        r *= sum(ps)
     acc = 0
     for x,p in zip(xs,ps):
         acc += p
