@@ -4,6 +4,7 @@ from collections import Counter
 from matplotlib import pyplot as plt
 import bisect
 import sys
+import numpy as np
 epsilon = 10**-100
 
 def log2(x):
@@ -919,14 +920,26 @@ def poisson_model(xs):
     lamb = mean(xs)
     return [rpoisson(lamb) for x in xs]
     
-def true_positives(predicted,actual):
+def true_positives_ref(predicted,actual):
     return sum(zipWith(lambda p,a:p==1 and a == 1,predicted,actual))
+
+def true_positives(predicted,actual):
+    count = 0
+    for p,a in zip(predicted,actual):
+        count += p*a
+    return count
 
 def true_negatives(predicted,actual):
     return sum(zipWith(lambda p,a:p==0 and a == 0,predicted,actual))
 
-def false_positives(predicted,actual):
+def false_positives_ref(predicted,actual):
     return sum(zipWith(lambda p,a:p==1 and a == 0,predicted,actual))
+
+def false_positives(predicted,actual):
+    count = 0
+    for p,a in zip(predicted,actual):
+        count += p*(1-a)
+    return count
 
 def false_negatives(predicted,actual):
     return sum(zipWith(lambda p,a:p==0 and a == 1,predicted,actual))
@@ -953,6 +966,92 @@ def f_score(predicted,actual):
     r = recall(predicted,actual)
     return 2 * p*r/(p + r + epsilon)
 
+def roc_curve_ref(positives,negatives,thetas=None,color=None):
+    """Given a set of positive scores, a set of negative scores, and a
+    range of theta values, plot a ROC curve for f on instances.
+
+    """
+    positives = np.array(positives)
+    negatives = np.array(negatives)
+    instances = np.concatenate((positives,negatives))
+    if thetas is None:
+        thetas = sorted(set(instances))
+    if color is None:
+        color= 'b'
+    tprs = []
+    fprs = []
+    Np = len(positives)
+    Nn = len(negatives)
+    N = float(Np + Nn)
+    actual = np.array(([1]*Np) + ([0]*Nn))
+    for theta in thetas:
+        predicted = 1*(instances > theta)
+        pred_positive = float(sum(predicted))
+        tpr = np.dot(predicted,actual)/float(Np)
+        fpr = np.dot(predicted,1-actual)/float(Nn)
+        tprs.append(tpr)
+        fprs.append(fpr)
+        print theta,tpr,fpr
+    plt.plot(fprs,tprs,color=color)
+    plt.xlabel("FPR")
+    plt.ylabel("TPR")
+
+def roc_curve(positives,negatives,color=None,annotate=False):
+    """Given a set of positive scores, a set of negative scores, and a
+    range of theta values, plot a ROC curve for f on instances.
+
+    Implements Algorithm 2 of:
+
+    Fawcett, T. (2004), 'ROC graphs: Notes and practical
+    considerations for researchers', ReCALL 31 (HPL-2003-4) , 1--38 .
+
+    """
+    instances = sorted([(x,0) for x in negatives] + [(x,1) for x in positives],
+                       key = lambda (x,cls):x,
+                       reverse=True)
+    i = 0
+    if color is None:
+        color= 'b'
+    tprs = []
+    fprs = []
+    thetas = []
+    Np = float(len(positives))
+    Nn = float(len(negatives))
+    tp = 0
+    fp = 0
+    theta = min([x for (x,cls) in instances]) - 1
+    theta_prev = theta
+    for theta,cls in instances:
+        if theta != theta_prev:
+            tprs.append(tp/Np)
+            fprs.append(fp/Nn)
+            thetas.append(theta)
+            theta_prev = theta
+        if cls == 1:
+            tp += 1
+        else:
+            fp += 1
+    tprs.append(tp/Np)
+    fprs.append(fp/Nn)
+    thetas.append(theta)
+    plt.plot(fprs,tprs,color=color)
+    if annotate:
+        theta_labels = ["%e" % theta for theta in thetas]
+        annotations = unique(zip(fprs,tprs,theta_labels))
+        modulus = len(annotations)/10
+        print "%s unique annotations" % len(annotations)
+        for i,(fpr,tpr,theta) in enumerate(annotations):
+            if i % modulus == 0:
+                plt.annotate(theta,xy=(fpr,tpr),xytext=(-20,20), textcoords = 'offset points',
+                             ha = 'right', va = 'bottom',
+                             bbox = dict(boxstyle = 'round,pad=0.5', fc = 'yellow', alpha = 0.5),
+                             arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=0'))
+    plt.xlabel("FPR")
+    plt.ylabel("TPR")
+    auc = sum(y1*(x1-x0) for ((x0,y0),(x1,y1)) in pairs(zip(fprs,tprs)))
+    print "AUC:",auc
+    return fprs,tprs,thetas
+    
 def sliding_window(seq,w,verbose=False):
     i = 0
     n = len(seq)
