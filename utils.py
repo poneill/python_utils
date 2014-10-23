@@ -342,13 +342,16 @@ def sample(n,xs,replace=True):
     if replace:
         return [random.choice(xs) for i in range(n)]
     else:
-        ys = list(xs[:])
+        N = len(xs)
+        if n > N:
+            raise Exception("n exceeds size of xs in sampling without replacement")
         samp = []
-        for i in range(n):
-            y = random.choice(ys)
-            samp.append(y)
-            ys.remove(y)
-        return samp
+        js = []
+        while len(js) < n:
+            j = random.randrange(N)
+            if not j in js:
+                js.append(j)
+        return [xs[j] for j in js]
 
 def bs(xs):
     return sample(len(xs),xs,replace=True)
