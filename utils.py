@@ -68,6 +68,12 @@ def mean_ci(xs):
 def coev(xs,correct=True):
     return sd(xs,correct)/mean(xs)
 
+def find_index(p,xs):
+    """From Haskell Data.List.  find index of first element satisfying predicate, or None if no element."""
+    for i,x in enumerate(xs):
+        if p(x):
+            return i
+    return None
 
 def zipWith(f,xs,ys):
     return map(lambda(x,y):f(x,y),zip(xs,ys))
