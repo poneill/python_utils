@@ -739,8 +739,6 @@ def mutate_motif(motif):
     i = random.randrange(len(motif))
     return [site if j!=i else mutate_site(site)
             for j,site in enumerate(motif)]
-    
-print "loaded utils anew"
 
 def get_ecoli_genome(at_lab=True):
     lab_file = "/home/poneill/ecoli/NC_000913.fna"
