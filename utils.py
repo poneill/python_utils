@@ -1144,7 +1144,7 @@ def maybesave(filename):
     else:
         plt.show()
 
-def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False,capture_state=lambda x:x,modulus=1000):
+def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False,capture_state=lambda x:x,modulus=1000,cache=True):
     """General purpose Metropolis-Hastings sampler.  If use_log is
     true, assume that f is actually log(f)"""
     if dprop is None:
@@ -1152,11 +1152,12 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
         dprop = lambda x_new,x:1
     x = x0
     xs = [x]
-    fx = f(x)
     acceptances = 0
     proposed_improvements = 0
     try:
         for it in xrange(iterations):
+            if it == 0 or not cache: # if not caching, reevaluate every time
+                fx = f(x)
             if it % modulus == 0:
                 print it,fx
             x_new = proposal(x)
@@ -1175,7 +1176,7 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
                 if comp == 1:
                     proposed_improvements += 1
                 print it,"fx:",fx,"fx_new:",fx_new,"ratio:",ratio,characterization,"r:",r,\
-                       "accept" if ratio > r else "no accept","acceptance ratio:",acceptances/float(max(it,1))
+                       "accept" if ratio > r else "decline","acceptance ratio:",acceptances/float(max(it,1))
             if ratio > r:
                 x = x_new
                 fx = fx_new
