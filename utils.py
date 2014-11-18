@@ -1004,8 +1004,8 @@ def roc_curve_ref(positives,negatives,thetas=None,color=None):
     plt.ylabel("TPR")
 
 def roc_curve(positives,negatives,color=None,annotate=False):
-    """Given a set of positive scores, a set of negative scores, and a
-    range of theta values, plot a ROC curve for f on instances.
+    """Given a set of positive scores and a set of negative scores, plot a
+    ROC curve.
 
     Implements Algorithm 2 of:
 
