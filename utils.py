@@ -1347,3 +1347,10 @@ def inverse_cdf_sampler(xs,ps):
         i = bisect.bisect_left(cum_ps,r)
         return xs[i]
     return sampler
+
+def fisher_dist(ps,qs):
+    return acos(sum([sqrt(p*q) for p,q in zip(ps,qs)]))
+
+def verb(x,verbose=False):
+    if verbose:
+        print x
