@@ -800,6 +800,7 @@ def inverse_cdf_sample(xs,ps,normalized=True):
         acc += p
         if acc > r:
             return x
+    raise Exception("failed to return on:",xs,ps)
 
 def pl(f,xs):
     """A convenience function for plotting.
@@ -1354,3 +1355,7 @@ def fisher_dist(ps,qs):
 def verb(x,verbose=False):
     if verbose:
         print x
+
+def report_vars(var_string):
+    print ", ".join(var_name + ":" + str(eval(var_name))
+                   for var_name in var_string.split())
