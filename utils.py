@@ -318,6 +318,13 @@ def foldl1(f,xs):
 def fac(n):
     return gamma(n+1)
 
+def log_fac(n):
+    """compute log n! for n <= 170, else approximate with stirling's"""
+    if n <= 170:
+        return log(fac(n))
+    else:
+        return (n + 1/2.0) * log(n) - n  + 1/2.0*log(2*pi)
+        
 def choose_reference(n,k):
     return fac(n)/(fac(k) * fac(n-k)) if n >= k else 0
 
