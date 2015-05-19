@@ -184,7 +184,9 @@ def dna_mi2(xs,ys):
 
 def permute(xs):
     """Return a random permutation of xs"""
-    return sample(len(xs),xs,replace=False)
+    xs_ = list(xs[:])
+    random.shuffle(xs_)
+    return xs_
 
 def test_permute(xs):
     permutation = permute(xs)
@@ -1366,3 +1368,5 @@ def verb(x,verbose=False):
 def report_vars(var_string):
     print ", ".join(var_name + ":" + str(eval(var_name))
                    for var_name in var_string.split())
+
+    
