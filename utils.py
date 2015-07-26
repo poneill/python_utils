@@ -7,6 +7,10 @@ import sys
 import numpy as np
 epsilon = 10**-100
 
+def iota(x):
+    """Identity function.  Surprisingly useful to have around"""
+    return x
+
 def log2(x):
     return log(x,2)
 
@@ -1121,10 +1125,6 @@ def qqplot(xs,ys=None):
     max_val = max(xs + ys)
     plt.scatter(sorted(xs),sorted(ys))
     plt.plot([min_val,max_val],[min_val,max_val])
-
-def iota(x):
-    """Identity function.  Surprisingly useful to have around"""
-    return x
     
 def head(xs, p=iota):
     """Take first element of xs, optionally satisfying predicate p"""
