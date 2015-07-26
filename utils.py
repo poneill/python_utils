@@ -161,6 +161,29 @@ def mi(xs,ys,correct=True):
     hxy = entropy(zip(xs,ys),correct=correct)
     return hx + hy - hxy
 
+def mi_table(xs,ys,display=False,normalize=False,f=iota):
+    x_vals = sorted(set(xs))
+    y_vals = sorted(set(ys))
+    N = float(len(xs))
+    assert len(ys) == N
+    x_freqs = {k:v/N for (k,v) in Counter(xs).items()}
+    y_freqs = {k:v/N for (k,v) in Counter(ys).items()}
+    joint_freqs = Counter({k:v/N for (k,v) in Counter(zip(xs,ys)).items()})
+    def denom(x,y):
+        if normalize:
+            return (x_freqs[x]*y_freqs[y])
+        else:
+            return 1
+    table = [[f(joint_freqs[x,y]/denom(x,y)) for y in y_vals] for x in x_vals]
+    if display:
+        print " ".join(y_vals)
+        for i,x in enumerate(x_vals):
+            print x,
+            for j,y in enumerate(y_vals):
+                print table[i][j],
+            print
+    return table
+    
 def dna_mi(xs,ys):
     """Compute mutual information (in bits) of samples from two
     nucleotide distributions, correcting for undersampling in entropy
@@ -1331,7 +1354,7 @@ def how_many(p,xs):
     return len(filter(p,xs))
 
 def dnorm(x,mu=0,sigma=1):
-    return 1/(sigma*sqrt(2*pi))*exp(-(x-mu)**2/(2*sigma**2))
+    return 1/(sigma*sqrt(2*pi))*exp(-(x-mu)**2/float(2*sigma**2))
 
 def take(n,xs):
     """Return first n items of xs, or all if len(xs) < n"""
