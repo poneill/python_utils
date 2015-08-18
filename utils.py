@@ -1246,6 +1246,8 @@ def anneal(f,proposal,x0,iterations=50000,T0=1,tf=0,k=1,verbose=False,stopping_c
         x_new = proposal(x)
         fx_new = f(x_new)
         T = get_temp(i)
+        if T == 0:
+            break
         log_ratio = (1/T * (fx-fx_new))
         if verbose:
             print "fx:",fx,"fx_new:",fx_new,"log_ratio:",log_ratio,"Temperature:",T
