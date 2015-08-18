@@ -1248,7 +1248,7 @@ def anneal(f,proposal,x0,iterations=50000,T0=1,tf=0,k=1,verbose=False,stopping_c
         T = get_temp(i)
         log_ratio = (1/T * (fx-fx_new))
         if verbose:
-            print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,"Temperature:",T
+            print "fx:",fx,"fx_new:",fx_new,"log_ratio:",log_ratio,"Temperature:",T
         if log_ratio > log(random.random()):
             x = x_new
             fx = fx_new
