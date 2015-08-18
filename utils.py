@@ -394,7 +394,7 @@ def sample(n,xs,replace=True):
             if not j in js:
                 js.append(j)
         return [xs[j] for j in js]
-
+    
 def bs(xs):
     return sample(len(xs),xs,replace=True)
 
@@ -1246,10 +1246,10 @@ def anneal(f,proposal,x0,iterations=50000,T0=1,tf=0,k=1,verbose=False,stopping_c
         x_new = proposal(x)
         fx_new = f(x_new)
         T = get_temp(i)
-        ratio = exp(1/T * (fx-fx_new))
+        log_ratio = (1/T * (fx-fx_new))
         if verbose:
             print "fx:",fx,"fx_new:",fx_new,"ratio:",ratio,"Temperature:",T
-        if ratio > random.random():
+        if log_ratio > log(random.random()):
             x = x_new
             fx = fx_new
             acceptances += 1
