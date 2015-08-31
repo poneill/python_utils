@@ -5,8 +5,12 @@ from matplotlib import pyplot as plt
 import bisect
 import sys
 import numpy as np
+import itertools
 epsilon = 10**-100
 
+def translate_spins(spins):
+    return "".join("ACGT"[i] for i in spins)
+    
 def iota(x):
     """Identity function.  Surprisingly useful to have around"""
     return x
@@ -1394,4 +1398,5 @@ def report_vars(var_string):
     print ", ".join(var_name + ":" + str(eval(var_name))
                    for var_name in var_string.split())
 
-    
+def kmers(n):
+    return itertools.product(*["ACGT" for i in range(n)])
