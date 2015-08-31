@@ -1400,3 +1400,6 @@ def report_vars(var_string):
 
 def kmers(n):
     return itertools.product(*["ACGT" for i in range(n)])
+
+def prod(xs):
+    return reduce(lambda x,y:x*y,xs)
