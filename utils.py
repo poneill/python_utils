@@ -6,6 +6,7 @@ import bisect
 import sys
 import numpy as np
 import itertools
+from tqdm import *
 epsilon = 10**-100
 
 def translate_spins(spins):
@@ -1414,11 +1415,12 @@ def sample_until_ref(p,sampler,n):
         trials += 1
     return xs
 
-def sample_until(p,sampler,n):
+def sample_until(p,sampler,n,progress_bar=True):
     """return n samples from sampler satisfying predicate p"""
     def gen():
         while True:
             x = sampler()
             if p(x):
                 return x
-    return [gen() for i in trange(n)]
+    pb = trange if progress_bar else iota #optional progress bar
+    return [gen() for i in pb(n)]
