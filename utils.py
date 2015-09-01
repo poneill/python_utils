@@ -1403,3 +1403,22 @@ def kmers(n):
 
 def prod(xs):
     return reduce(lambda x,y:x*y,xs)
+
+def sample_until_ref(p,sampler,n):
+    xs = []
+    trials = 0
+    while len(xs) < n:
+        x = sampler()
+        if p(x):
+            xs.append(x)
+        trials += 1
+    return xs
+
+def sample_until(p,sampler,n):
+    """return n samples from sampler satisfying predicate p"""
+    def gen():
+        while True:
+            x = sampler()
+            if p(x):
+                return x
+    return [gen() for i in trange(n)]
