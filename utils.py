@@ -1428,3 +1428,9 @@ def sample_until(p,sampler,n,progress_bar=True):
                 return x
     pb = trange if progress_bar else iota #optional progress bar
     return [gen() for i in pb(n)]
+
+def cohens_d(xs,ys):
+    return (mean(xs) - mean(ys)) / (sqrt((sd(xs) ** 2 + sd(ys) ** 2) / 2))
+
+def compose(f,g):
+    return lambda x:f(g(x))
