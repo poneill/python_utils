@@ -1313,6 +1313,9 @@ def motif_distance(motif1,motif2):
     cols1 = transpose(motif1)
     cols2 = transpose(motif2)
     return norm(zipWith(column_distance,cols1,cols2))
+
+def motif_hamming_distance(m1,m2):
+    return sum(zipWith(hamming,m1,m2))
     
 def pred_obs(xys,label=None,color='b',show=True):
     xs,ys = transpose(xys)
@@ -1434,3 +1437,6 @@ def cohens_d(xs,ys):
 
 def compose(f,g):
     return lambda x:f(g(x))
+
+def diffs(xs):
+    return [x2-x1 for (x1,x2) in pairs(xs)]
