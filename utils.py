@@ -596,8 +596,9 @@ def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=Fals
     return x
             
 
-def secant_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10):
-    #print xmin,xmax,ymin,ymax
+def secant_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
+    if verbose:
+        print xmin,xmax,ymin,ymax
     if ymin is None:
         ymin = f(xmin)
     if ymax is None:
@@ -610,9 +611,9 @@ def secant_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10):
         return x
     else:
         if sign(y) == sign(ymin):
-            return secant_interval(f,x,xmax,ymin=y,ymax=ymax,tolerance=tolerance)
+            return secant_interval(f,x,xmax,ymin=y,ymax=ymax,tolerance=tolerance,verbose=verbose)
         else:
-            return secant_interval(f,xmin,x,ymin=ymin,ymax=y,tolerance=tolerance)
+            return secant_interval(f,xmin,x,ymin=ymin,ymax=y,tolerance=tolerance,verbose=verbose)
 
         
 def secant_interval_robust(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,p=0.1):
