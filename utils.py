@@ -95,11 +95,12 @@ def normalize(xs):
     total = float(sum(xs))
     return [x/total for x in xs]
 
-def frequencies_ref(xs):
+def frequencies(xs):
+    # faster than either of frequencies_ref [!]
     length = float(len(xs))
     return [xs.count(x)/length for x in set(xs)]
 
-def frequencies(xs):
+def frequencies_ref(xs):
     length = 0
     counts = {}
     for x in xs:
@@ -110,7 +111,11 @@ def frequencies(xs):
         length += 1
     length = float(length)
     return [count/length for count in counts.values()]
-            
+
+def frequencies_ref2(xs):
+    n = float(len(xs))
+    return [v/n for v in Counter(xs).values()]
+    
 def unique(xs):
     us = []
     for x in xs:
