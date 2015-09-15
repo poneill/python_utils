@@ -794,6 +794,20 @@ def mutate_motif(motif):
     return [site if j!=i else mutate_site(site)
             for j,site in enumerate(motif)]
 
+def mutate_motif_p(motif,p):
+    motif_ = motif[:]
+    n = len(motif)
+    L = len(motif[0])
+    N = n * L
+    rs = np.random.binomial(N,p)
+    for r in xrange(rs):
+        i = random.randrange(n)
+        j = random.randrange(L)
+        b = motif[i][j]
+        new_b = random.choice([c for c in "ACGT" if not c == b])
+        motif_[i] = subst(motif[i],new_b,j)
+    return motif_
+
 def get_ecoli_genome(at_lab=True):
     lab_file = "/home/poneill/ecoli/NC_000913.fna"
     home_file = "/home/pat/ecoli/NC_000913.fna"
