@@ -639,7 +639,7 @@ def secant_interval_robust(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,p=0.1
 
 def percentile(x,xs):
     """Compute what percentile value x is in xs"""
-    return len(filter(lambda y:y > x,xs))/float(len(xs))
+    return len(filter(lambda y:y < x,xs))/float(len(xs))
 
 def normal_model(xs):
     mu = mean(xs)
@@ -691,9 +691,11 @@ def hamming(xs,ys):
     return sum(zipWith(lambda x,y:x!=y,xs,ys))
 
 def fdr(ps,alpha=0.05):
-    """Given a list of p-values and a desired significance alpha, find
-    the adjusted q-value such that a p-value less than q is expected
-    to be significant at alpha, via the Benjamini-Hochberg method."""
+    """Given a list of p-values and a desired significance alpha, find the
+    adjusted q-value such that a p-value less than q is expected to be
+    significant at alpha, via the Benjamini-Hochberg method
+    (appropriate for independent tests).
+    """
     ps = sorted(ps)
     m = len(ps)
     ks = [k for k in range(m) if ps[k]<= (k+1)/float(m)*alpha] #k+1 because pvals are 1-indexed.
@@ -720,7 +722,8 @@ def bhy(ps,alpha=0.05):
     m = len(ps)
     def c(n):
         return sum(1/float(i) for i in range(1,n+1))
-    ks = [k for k in range(m) if ps[k]<= k/(float(m)*c(m))*alpha]
+    cm = c(m)
+    ks = [k for k in range(m) if ps[k]<= k/(float(m)*cm)*alpha]
     K = max(ks) if ks else None
     return ps[K] if K else None #if none are significant
     
