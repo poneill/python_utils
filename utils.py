@@ -1175,7 +1175,7 @@ def product_ref(xs):
     this implementation is not safe for production.  See product."""
     return foldl(lambda x,y:x*y,1,xs)
 
-def product(xs):
+def prod(xs):
     acc = 1
     for x in xs:
         acc *= x
@@ -1432,7 +1432,7 @@ def report_vars(var_string):
 def kmers(n):
     return itertools.product(*["ACGT" for i in range(n)])
 
-def prod(xs):
+def prod_dep(xs):
     return reduce(lambda x,y:x*y,xs)
 
 def sample_until_ref(p,sampler,n):
