@@ -368,10 +368,10 @@ def log_fac_dep(n):
 def log_fac(n):
     return gammaln(n+1)
         
-def choose_reference(n,k):
+def choose(n,k):
     return fac(n)/(fac(k) * fac(n-k)) if n >= k else 0
 
-def choose(n,k):
+def choose_reference(n,k):
     return product((n-(k-i))/float(i) for i in range(1,k+1))
 
 def concat(xxs):
