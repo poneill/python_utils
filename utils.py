@@ -1306,9 +1306,9 @@ def gini(xs):
     n = float(len(ys))
     return (2*sum((i+1)*y for i,y in enumerate(ys)))/(n*sum(ys)) - (n+1)/n
 
-def motif_gini(motif):
+def motif_gini(motif,correct=False):
     """Return the gini coefficient of the column ics"""
-    return gini(columnwise_ic(motif))
+    return gini(columnwise_ic(motif,correct=correct))
     
 def motif_kl(motif1,motif2,pseudocount=1/4.0):
     """Return Kullbeck-Leibler divergence of two motifs, assuming
