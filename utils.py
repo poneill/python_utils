@@ -811,10 +811,31 @@ def mutate_motif_p(motif,p):
     n = len(motif)
     L = len(motif[0])
     N = n * L
-    rs = np.random.binomial(N,p)
-    for r in xrange(rs):
+    r = np.random.binomial(N,p)
+    for _ in xrange(r):
         i = random.randrange(n)
         j = random.randrange(L)
+        b = motif[i][j]
+        new_b = random.choice([c for c in "ACGT" if not c == b])
+        motif_[i] = subst(motif[i],new_b,j)
+    return motif_
+
+def mutate_motif_p_exact(motif,p):
+    motif_ = motif[:]
+    n = len(motif)
+    L = len(motif[0])
+    N = n * L
+    r = np.random.binomial(N,p)
+    r_so_far = 0
+    choices = []
+    while r_so_far < r:
+        i = random.randrange(n)
+        j = random.randrange(L)
+        if (i,j) in choices:
+            continue
+        else:
+            choices.append((i,j))
+            r_so_far += 1
         b = motif[i][j]
         new_b = random.choice([c for c in "ACGT" if not c == b])
         motif_[i] = subst(motif[i],new_b,j)
