@@ -460,17 +460,29 @@ def boolean_matrix_mult(A,B):
              for j in xrange(len(B[0]))]
             for i in verbose_gen(xrange(len(A)))]
 
-def iterate(f,x,n):
+def iterate_ref(f,x,n):
     if n == 0:
         return x
     else:
         return iterate(f,f(x),n-1)
 
-def iterate_list(f,x,n):
+def iterate(f,x,n):
+    for i in xrange(n):
+        x = f(x)
+    return x
+    
+def iterate_list_ref(f,x,n):
     if n == 0:
         return [x]
     else:
         return  [x] + iterate_list(f,f(x),n-1)
+
+def iterate_list(f,x,n):
+    xs = [x]
+    for i in xrange(n):
+        x = f(x)
+        xs.append(x)
+    return xs
     
 def converge(f,x,verbose=False,i=0):
     if verbose:
