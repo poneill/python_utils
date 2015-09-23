@@ -371,6 +371,9 @@ def log_fac(n):
 def choose(n,k):
     return fac(n)/(fac(k) * fac(n-k)) if n >= k else 0
 
+def log_choose(n,k):
+    return log_fac(n) - (log_fac(k) + log_fac(n-k))
+    
 def choose_reference(n,k):
     return product((n-(k-i))/float(i) for i in range(1,k+1))
 
