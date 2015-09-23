@@ -820,6 +820,11 @@ def mutate_motif_p(motif,p):
         motif_[i] = subst(motif[i],new_b,j)
     return motif_
 
+def subst_motif(motif,i,j,new_b):
+    motif_ = motif[:]
+    motif_[i] = subst(motif[i],new_b,j)
+    return motif_
+    
 def get_ecoli_genome(at_lab=True):
     lab_file = "/home/poneill/ecoli/NC_000913.fna"
     home_file = "/home/pat/ecoli/NC_000913.fna"
