@@ -375,7 +375,7 @@ def log_choose(n,k):
     return log_fac(n) - (log_fac(k) + log_fac(n-k))
     
 def choose_reference(n,k):
-    return product((n-(k-i))/float(i) for i in range(1,k+1))
+    return prod((n-(k-i))/float(i) for i in range(1,k+1))
 
 def concat(xxs):
     return [x for xs in xxs for x in xs]
