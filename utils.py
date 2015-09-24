@@ -841,7 +841,7 @@ def mutate_motif_p_exact(motif,p):
             r_so_far += 1
             b = motif[i][j]
             new_b = random.choice([c for c in "ACGT" if not c == b])
-            motif_[i] = subst(motif[i],new_b,j)
+            motif_[i] = subst(motif_[i],new_b,j)
     return motif_
 
 def subst_motif(motif,i,j,new_b):
