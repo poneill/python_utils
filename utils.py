@@ -820,7 +820,7 @@ def mutate_motif_p(motif,p):
         j = random.randrange(L)
         b = motif[i][j]
         new_b = random.choice([c for c in "ACGT" if not c == b])
-        motif_[i] = subst(motif[i],new_b,j)
+        motif_[i] = subst(motif_[i],new_b,j)
     return motif_
 
 def mutate_motif_p_exact(motif,p):
