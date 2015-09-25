@@ -1210,6 +1210,29 @@ def find(p,xs):
         if p(x):
             return x
     return None
+
+def binary_find(p,xs):
+    """find first x satisfying p, assuming monotonicity"""
+    lo = 0
+    hi = len(xs)
+    plo = p(lo)
+    phi = p(hi)
+    if not phi:
+        return None
+    while hi - lo > 1:
+        guess = int((lo + hi)/2)
+        pguess = p(guess)
+        print lo,plo,hi,phi,guess,pguess
+        if pguess:
+            hi = guess
+            phi = pguess
+        else:
+            lo = guess
+            plo = pguess
+    print "lo:",plo
+    print "hi:",phi
+    print "guess:",pguess
+    return guess
     
 def product_ref(xs):
     """multiply elements of list.  Python doesn't implement TCO so
@@ -1404,7 +1427,7 @@ def score_seq(matrix,seq,ns=False):
     ns_binding_const = -8 #kbt
     #specific_binding = sum([row[base_dict[b]] for row,b in zip(matrix,seq)])
     specific_binding = 0
-    for i in xrange(len(matrix)):        
+    for i in range(len(matrix)):        
         specific_binding += matrix[i][base_dict[seq[i]]]
     if ns:
         return log(exp(-beta*specific_binding) + exp(-beta*ns_binding_const))/-beta
