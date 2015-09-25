@@ -1250,7 +1250,7 @@ def maybesave(filename):
     else:
         plt.show()
 
-def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False,capture_state=lambda x:x,modulus=1000,cache=True):
+def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False,capture_state=lambda x:x,modulus=1000,cache=True,return_ar=False):
     """General purpose Metropolis-Hastings sampler.  If use_log is
     true, assume that f is actually log(f)"""
     if dprop is None:
@@ -1292,7 +1292,10 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
         if verbose:
             print "Proposed improvement ratio:",proposed_improvements/float(iterations)
         print "Acceptance Ratio:",acceptances/float(iterations)
-        return xs
+        if return_ar:
+            return acceptances/float(iterations)
+        else:
+            return xs
     except KeyboardInterrupt:
         return xs
 
