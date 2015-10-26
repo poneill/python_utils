@@ -1004,12 +1004,6 @@ def convolve(xs,ys):
     YS = dft(ys)
     return inv_dft([X*Y for (X,Y) in zip(XS,YS)])
 
-def roll_avg(xs):
-    ys = [xs[0]] + [0]*(len(xs) - 1)
-    acc = xs[0]
-    for i,x in enumerate(xs[1:]):
-        acc = acc*(i)
-        ys[i] = 
 def circular_rolling_average(xs,k):
     """return circular rolling average of window of /radius/ k centered
     about x"""
