@@ -1004,6 +1004,12 @@ def convolve(xs,ys):
     YS = dft(ys)
     return inv_dft([X*Y for (X,Y) in zip(XS,YS)])
 
+def roll_avg(xs):
+    ys = [xs[0]] + [0]*(len(xs) - 1)
+    acc = xs[0]
+    for i,x in enumerate(xs[1:]):
+        acc = acc*(i)
+        ys[i] = 
 def circular_rolling_average(xs,k):
     """return circular rolling average of window of /radius/ k centered
     about x"""
@@ -1416,10 +1422,10 @@ def pred_obs(xys,label=None,color='b',show=True):
     if show:
         plt.show()
 
-def make_pssm(seqs):
+def make_pssm(seqs,pseudocount=1):
     cols = transpose(seqs)
     N = float(len(seqs))
-    return [[log2((col.count(b)+1)/(N+4.0)) - log2(0.25) for b in "ACGT"] for col in cols]
+    return [[log2((col.count(b)+pseudocount)/(N+4.0*pseudocount)) - log2(0.25) for b in "ACGT"] for col in cols]
     
 def score_seq(matrix,seq,ns=False):
     """Score a sequence with a motif."""
@@ -1530,3 +1536,8 @@ def compose(f,g):
 
 def diffs(xs):
     return [x2-x1 for (x1,x2) in pairs(xs)]
+
+def running_average(xs):
+    accs = 
+    for i,xs in enumerate(xs):
+        
