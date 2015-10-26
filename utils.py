@@ -1530,8 +1530,4 @@ def compose(f,g):
 
 def diffs(xs):
     return [x2-x1 for (x1,x2) in pairs(xs)]
-
-def running_average(xs):
-    accs = 
-    for i,xs in enumerate(xs):
         
