@@ -1554,3 +1554,16 @@ def compose(f,g):
 def diffs(xs):
     return [x2-x1 for (x1,x2) in pairs(xs)]
         
+def param_scan(f,xs,ys):
+    from matplotlib.ticker import FormatStrFormatter
+    fig, ax = plt.subplots()
+    mat = [[f(x,y) for x in xs] for y in tqdm(ys)]
+    plt.imshow(mat,interpolation='none')
+    plt.xticks(range(len(xs)),xs,rotation=90)
+    plt.yticks(range(len(xs)),ys)
+    plt.colorbar()
+
+def kde(xs,sigma=1):
+    def f(xp):
+        return mean(dnorm(xp,mu=x,sigma=sigma) for x in xs)
+    return f
