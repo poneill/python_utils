@@ -1567,3 +1567,34 @@ def kde(xs,sigma=1):
     def f(xp):
         return mean(dnorm(xp,mu=x,sigma=sigma) for x in xs)
     return f
+
+def gelman_rubin(chains):
+    N = len(chains[0])
+    burned_chains = [chain[N/2:] for chain in chains] # eliminate burn-in
+    # now split each one in half
+    halved_chains = concat([(chain[:len(chain)/2],chain[len(chain)/2:]) for chain in burned_chains])
+    min_len = min(map(len,halved_chains))
+    halved_chains = [hc[:min_len] for hc in halved_chains]
+    m = len(halved_chains)
+    n = len(halved_chains[0])
+    psi = np.matrix(halved_chains).transpose()
+    psi_bar = np.mean(psi)
+    B = n/float(m-1)*sum((np.mean(psi[:,j]) - psi_bar)**2 for j in range(m))
+    def sj_sq(j):
+        psi_j = np.mean(psi[:,j])
+        return 1.0/(n-1)*sum((psi[i,j] - psi_j)**2 for i in range(n))
+    W = 1.0/m * sum(sj_sq(j)for j in range(m))
+    var_hat_plus = (n-1)/float(n)*W + 1.0/n * B
+    R_hat = sqrt(var_hat_plus/W)
+    def V(t):
+        return 1.0/(m*(n-t))*sum((psi[i,j] - psi[i-t,j])**2 for i in range(t+1,n) for j in range(m))
+    def rho_hat(t):
+        return 1 - V(t)/(2*var_hat_plus)
+    crit = lambda t:(t % 2 == 1) and rho_hat(t+1) + rho_hat(t+2) < 0
+    #T = find(lambda t:(t % 2 == 1) and rho_hat(t+1) + rho_hat(t+2) < 0,range(n-1))
+    T = binary_find(crit,range(n))
+    if not T is None:
+        neff = m*n/(1 + 2*sum(rho_hat(t) for t in range(1,T+1)))
+    else:
+        neff = None
+    return R_hat,neff
