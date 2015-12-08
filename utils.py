@@ -7,6 +7,7 @@ import sys
 import numpy as np
 import itertools
 from scipy.special import gammaln
+from scipy.stats import mannwhitneyu
 from tqdm import *
 epsilon = 10**-100
 
@@ -1220,6 +1221,7 @@ def qqplot(xs,ys=None):
     min_val = min(xs + ys)
     max_val = max(xs + ys)
     plt.scatter(sorted(xs),sorted(ys))
+    print "Mann-Whitney U test:",mannwhitneyu(xs,ys)
     plt.plot([min_val,max_val],[min_val,max_val])
     
 def head(xs, p=iota):
