@@ -1544,7 +1544,7 @@ def sample_until(p,sampler,n,progress_bar=True):
             x = sampler()
             if p(x):
                 return x
-    pb = trange if progress_bar else iota #optional progress bar
+    pb = trange if progress_bar else xrange #optional progress bar
     return [gen() for i in pb(n)]
 
 def cohens_d(xs,ys):
