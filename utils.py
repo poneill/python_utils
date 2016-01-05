@@ -2,6 +2,7 @@ import random
 from math import sqrt,log,exp,pi,sin,cos,gamma,acos,sqrt
 from collections import Counter
 from matplotlib import pyplot as plt
+import seaborn as sns
 import bisect
 import sys
 import numpy as np
@@ -9,6 +10,7 @@ import itertools
 from scipy.special import gammaln
 from scipy.stats import mannwhitneyu
 from tqdm import *
+from scipy.stats import pearsonr, spearmanr
 epsilon = 10**-100
 
 def translate_spins(spins):
@@ -590,7 +592,8 @@ def bisect_interval_ref(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=
             return bisect_interval(f,xmin,x,ymin=ymin,ymax=y,
                                    tolerance=tolerance,verbose=verbose)
 
-def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
+def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,xtol=1e-10, ytol=1e-10,
+                    verbose=False):
     if ymin is None:
         ymin = f(xmin)
     if ymax is None:
@@ -598,7 +601,7 @@ def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=Fals
     assert(sign(ymin)!= sign(ymax)), "ymin=%s,ymax=%s" % (ymin,ymax)
     x = (xmin + xmax)/2.0
     y = f(x)
-    while abs(y) > tolerance:
+    while (xmax - xmin) > xtol and abs(y) > ytol:
         if verbose:
             print xmin,xmax,ymin,ymax
         x = (xmin + xmax)/2.0
@@ -611,7 +614,136 @@ def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=Fals
             ymax = y
     return x
             
+def bisect_interval_noisy_ref(f,x0,
+                              tolerance=0.01,verbose=False,
+                              lb=None,ub=None,w=1.0,iterations=None):
+    """solve f(x) == 0 via Robbins-Monro algorithm"""
+    xs = [x0]
+    def a(i):
+        return w/(i+1)
+    iterator = itertools.count() if iterations is None else xrange(iterations)
+    for i in iterator:
+        xn = xs[-1]
+        fxn = f(xn)
+        xnp1 = -a(i)*fxn + xn
+        if lb and xnp1 < lb:
+            print "warning: hit lower bound"
+            xnp1 = lb
+        if ub and xnp1 > ub:
+            print "warning: hit upper bound"
+            xnp1 = ub
+        xs.append(xnp1)
+        if verbose:
+            print i, xn, fxn, abs(xnp1 - xn)
+        if iterations is None and i > 3:
+            if abs(xs[-1] - xs[-4]) < tolerance:
+                return xs[-1]
+    return xs[-1]
 
+def bisect_interval_noisy_spec(f,x0,
+                              tolerance=0.01,verbose=False,
+                              lb=None,ub=None,w=1.0,iterations=None):
+    """solve f(x) == 0 via Robbins-Monro algorithm"""
+    xs = [x0]
+    ys = []
+    def a(i):
+        return w/(i+1)
+    iterator = itertools.count() if iterations is None else xrange(iterations)
+    for i in iterator:
+        xn = xs[-1]
+        yn = f(xn)
+        ys.append(yn)
+        xnp1 = -a(i)*yn + xn
+        if lb and xnp1 < lb:
+            print "warning: hit lower bound"
+            xnp1 = lb
+        if ub and xnp1 > ub:
+            print "warning: hit upper bound"
+            xnp1 = ub
+        xs.append(xnp1)
+        if verbose:
+            print i, xnp1, xn, a(i), abs(xnp1 - xn)
+        if iterations is None and i > 3:
+            if abs(xs[-1] - xs[-4]) < tolerance:
+                return xs[-1]
+    return xs,ys
+
+def bisect_interval_noisy(f,x0,iterations=None,xtol=0.01,verbose=False,lb=None,ub=None,w=1):
+    """solve f(x) == 0 via Polyak-Juditsky algorithm"""
+    xs = [x0]
+    ys = []
+    running_mean = x0
+    def b(i):
+        return w*(i)**(-1/2.0)
+    iterator = (itertools.count(start=1) if iterations is None
+                else xrange(1,iterations+1))
+    for i in iterator:
+        xn = xs[-1]
+        yn = f(xn)
+        xnp1 = -b(i)*yn + xn
+        if lb is not None and xnp1 < lb:
+            print "warning: hit lower bound"
+            xnp1 = lb
+        if ub is not None and xnp1 > ub:
+            print "warning: hit upper bound"
+            xnp1 = ub
+        xs.append(xnp1)
+        ys.append(yn)
+        old_running_mean = running_mean
+        running_mean = (old_running_mean*i+xnp1)/(i+1.0)
+        if verbose:
+            print i, running_mean, xnp1, xn, abs(running_mean - old_running_mean), mean(ys)
+        if iterations is None and i > 3:
+            if abs(running_mean - old_running_mean) < xtol:
+                return mean(xs)
+    return mean(xs)
+
+def bisect_interval_home_rolled(f, x0,  iterations, a=1, lb=None,ub=None,
+                                verbose=False):
+    xs = [x0]
+    def restrict(x):
+        print "restricting:",x
+        if not lb is None and x < lb:
+            return lb
+        elif not ub is None and x > ub:
+            return ub
+        else:
+            return x
+    for n in xrange(iterations):
+        x = mean(xs)
+        print "x:",x
+        y = f(x)
+        print "y:",y
+        x_new = restrict(x - a*y)
+        print "x_new:",x_new
+        xs.append(x_new)
+        print x, x_new, y
+    return mean(xs)
+        
+def bisect_interval_noisy_kde(f, lb, ub, trials=100, iterations_per_trial=1):
+    xs = np.linspace(lb, ub, trials)
+    ys = map(lambda x:mean(f(show(x)) for _ in range(iterations_per_trial)), xs)
+    fhat = kde_regress(xs,ys,monotonic=True)
+    return bisect_interval(fhat,lb, ub)
+
+def bisect_interval_kw(f,lb,ub, iterations=10, verbose=False):
+    """find root of f in [lb, ub] via Kiefer-Wolfowitz algorithm"""
+    g = lambda x:-f(x)**2
+    x = (lb + ub)/2.0
+    def a(n):
+        return 1.0/(n)
+    def c(n):
+        return n**(-1/3.0)
+    for n in range(1,iterations+1):
+        x = x + a(n)*(g(x+c(n)) - g(x-c(n)))/c(n)
+        if x < lb + c(n):
+            x = lb + c(n)
+        elif x > ub - c(n):
+            x = ub - c(n)
+        if verbose:
+            print n, x
+    return x
+    
 def secant_interval_ref(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
     if verbose:
         print xmin,xmax,ymin,ymax
@@ -1218,8 +1350,8 @@ def random_model(xs):
 def qqplot(xs,ys=None):    
     if ys is None:
         ys = normal_model(xs)
-    min_val = min(xs + ys)
-    max_val = max(xs + ys)
+    min_val = min(min(xs), min(ys))
+    max_val = max(max(xs), max(ys))
     plt.scatter(sorted(xs),sorted(ys))
     print "Mann-Whitney U test:",mannwhitneyu(xs,ys)
     plt.plot([min_val,max_val],[min_val,max_val])
@@ -1446,7 +1578,7 @@ def make_pssm(seqs,pseudocount=1):
     N = float(len(seqs))
     return [[log2((col.count(b)+pseudocount)/(N+4.0*pseudocount)) - log2(0.25) for b in "ACGT"] for col in cols]
     
-def score_seq(matrix,seq,ns=False):
+def score_seq_ns(matrix,seq,ns=False):
     """Score a sequence with a motif."""
     base_dict = {'A':0,'C':1,'G':2,'T':3}
     ns_binding_const = -8 #kbt
@@ -1459,6 +1591,36 @@ def score_seq(matrix,seq,ns=False):
     else:
         return specific_binding
 
+def score_seq(matrix,seq):
+    #base_dict = {'A':0,'C':1,'G':2,'T':3}
+    def base_dict(b):
+        if b <= "C":
+            if b == "A":
+                return 0
+            else:
+                return 1
+        elif b == "G":
+            return 2
+        else:
+            return 3
+    ans = 0
+    for i in xrange(len(seq)):
+        ans += matrix[i][base_dict(seq[i])]
+    return ans
+
+def seq_scorer(matrix):
+    """accept matrix, return a function scoring sites"""
+    # when score_seq JUST ISN'T FAST ENOUGH
+    base_dicts = [{b:row[j] for j,b in enumerate("ACGT")} for row in matrix]
+    def f(site):
+        ans = 0
+        for i in xrange(len(site)):
+            ans += base_dicts[i][site[i]]
+        return ans
+    return f
+        
+
+        
 def score_genome(matrix,genome,ns=False):
     w = len(matrix)
     L = len(genome)
@@ -1570,6 +1732,28 @@ def kde(xs,sigma=1):
         return mean(dnorm(xp,mu=x,sigma=sigma) for x in xs)
     return f
 
+def kde_regress(xs, ys, sigma=None, monotonic=False):
+    if monotonic:
+        def is_monotonic(f):
+            yhats = map(f,sorted(xs))
+            return -1 + 2 * all(y1 <= y2 for y1,y2 in pairs(yhats))
+        g = lambda sigma: is_monotonic(kde_regress(xs,ys,sigma=sigma))
+        lb = ub = 0.01
+        while g(ub) < 0:
+            ub *= 2
+            print "ub:", ub
+        sigma = bisect_interval(g, lb, ub, xtol=10**-3)
+        return kde_regress(xs,ys,sigma=sigma)
+    print "sigma:",sigma
+    if sigma is None:
+        sigma = 3*(max(xs) - min(xs))/float(len(xs))
+        print "sigma:",sigma
+    def f(xp):
+        ds = [dnorm(xp,mu=x,sigma=sigma) for x,y in zip(xs,ys)]
+        Z = sum(ds)
+        return sum(y*d for d,y in zip(ds,ys))/Z
+    return f
+
 def gelman_rubin(chains):
     N = len(chains[0])
     burned_chains = [chain[N/2:] for chain in chains] # eliminate burn-in
@@ -1600,3 +1784,11 @@ def gelman_rubin(chains):
     else:
         neff = None
     return R_hat,neff
+
+def scatter(xs,ys,color='black'):
+    plt.scatter(xs,ys)
+    minval = min(map(min,[xs,ys]))
+    maxval = min(map(max,[xs,ys]))
+    plt.plot([minval,maxval],[minval,maxval],linestyle='--',color=color)
+    print pearsonr(xs,ys)
+    print spearmanr(xs,ys)
