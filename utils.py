@@ -98,6 +98,16 @@ def normalize(xs):
     total = float(sum(xs))
     return [x/total for x in xs]
 
+def log_sum(log_xs):
+    "given log_xs, return log(sum(xs))"
+    log_xmax = max(log_xs)
+    return log_xmax + log(sum(exp(log_x - log_xmax) for log_x in log_xs))
+    
+def log_normalize(log_xs):
+    """return log_xs' such that sum(xs') == 1'"""
+    log_Z = log_sum(log_xs)
+    return [log_x - log_Z for log_x in log_xs]
+        
 def frequencies(xs):
     # faster than either of frequencies_ref [!]
     length = float(len(xs))
@@ -1785,10 +1795,11 @@ def gelman_rubin(chains):
         neff = None
     return R_hat,neff
 
-def scatter(xs,ys,color='black'):
-    plt.scatter(xs,ys)
+def scatter(xs,ys,line_color='black',color='b'):
+    plt.scatter(xs,ys,color=color)
     minval = min(map(min,[xs,ys]))
     maxval = min(map(max,[xs,ys]))
-    plt.plot([minval,maxval],[minval,maxval],linestyle='--',color=color)
+    plt.plot([minval,maxval],[minval,maxval],linestyle='--',color=line_color)
     print pearsonr(xs,ys)
     print spearmanr(xs,ys)
+
