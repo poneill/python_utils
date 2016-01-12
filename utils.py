@@ -1813,3 +1813,11 @@ def scatter(xs,ys,line_color='black',color='b'):
     print pearsonr(xs,ys)
     print spearmanr(xs,ys)
 
+def format_params(param_names_str):
+    """given string of parameters 'x y z' return string of form:
+    'x = $x, y=$y, z = $z' """
+    var_names = param_names_str.split()
+    param_template = ", ".join("{0}=%({0})s".format(v) for v in var_names)
+    param_string = param_template % globals()
+    return param_string
+    
