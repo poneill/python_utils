@@ -102,12 +102,22 @@ def log_sum(log_xs):
     "given log_xs, return log(sum(xs))"
     log_xmax = max(log_xs)
     return log_xmax + log(sum(exp(log_x - log_xmax) for log_x in log_xs))
+
+def np_log_sum(log_xs):
+    "given numpy array log_xs, return log(sum(xs))"
+    log_xmax = np.max(log_xs)
+    return log_xmax + log(np.sum(np.exp(log_xs - log_xmax)))
+    #return log_xmax + log(sum(exp(log_x - log_xmax) for log_x in log_xs))
     
 def log_normalize(log_xs):
     """return log_xs' such that sum(xs') == 1'"""
     log_Z = log_sum(log_xs)
     return [log_x - log_Z for log_x in log_xs]
-        
+
+def np_log_normalize(log_xs):
+    log_Z = np_log_sum(log_xs)
+    return log_xs - log_Z
+    
 def frequencies(xs):
     # faster than either of frequencies_ref [!]
     length = float(len(xs))
