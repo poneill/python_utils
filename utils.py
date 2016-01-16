@@ -199,6 +199,13 @@ def mi(xs,ys,correct=True):
     hxy = entropy(zip(xs,ys),correct=correct)
     return hx + hy - hxy
 
+def dna_mi(xs,ys):
+    hx  = entropy(xs,correct=True, alphabet_size=4)
+    hy  = entropy(ys,correct=True, alphabet_size=4)
+    hxy = entropy(zip(xs,ys),correct=True, alphabet_size=16)
+    return hx + hy - hxy
+    
+
 def mi_table(xs,ys,display=False,normalize=False,f=iota):
     x_vals = sorted(set(xs))
     y_vals = sorted(set(ys))
@@ -222,14 +229,14 @@ def mi_table(xs,ys,display=False,normalize=False,f=iota):
             print
     return table
     
-def dna_mi(xs,ys):
-    """Compute mutual information (in bits) of samples from two
-    nucleotide distributions, correcting for undersampling in entropy
-    calculation."""
-    hx = dna_entropy(xs)
-    hy = dna_entropy(ys)
-    hxy = entropy(zip(xs,ys),correct=True,alphabet_size=16)
-    return hx + hy - hxy
+# def dna_mi(xs,ys):
+#     """Compute mutual information (in bits) of samples from two
+#     nucleotide distributions, correcting for undersampling in entropy
+#     calculation."""
+#     hx = dna_entropy(xs)
+#     hy = dna_entropy(ys)
+#     hxy = entropy(zip(xs,ys),correct=True,alphabet_size=16)
+#     return hx + hy - hxy
 
 def dna_mi2(xs,ys):
     """Compute mutual information (in bits) of samples from two
@@ -968,6 +975,11 @@ def total_motif_mi(motif):
     cols = transpose(motif)
     return sum([mi(col1,col2) for (col1,col2) in choose2(cols)])
 
+def motif_mi_pp(motif):
+    """pairwise mi per pair"""
+    L = len(motif[0])
+    return total_motif_mi(motif)/choose(L,2)
+
 def random_site(n):
     return "".join(random.choice("ACGT") for i in range(n))
 
@@ -1548,7 +1560,10 @@ def anneal(f,proposal,x0,iterations=50000,T0=1,tf=0,k=1,verbose=False,stopping_c
 def gini(xs):
     ys = sorted(xs)
     n = float(len(ys))
-    return (2*sum((i+1)*y for i,y in enumerate(ys)))/(n*sum(ys)) - (n+1)/n
+    if sum(ys) == 0:
+        return 0
+    else:
+        return (2*sum((i+1)*y for i,y in enumerate(ys)))/(n*sum(ys)) - (n+1)/n
 
 def motif_gini(motif,correct=False):
     """Return the gini coefficient of the column ics"""
