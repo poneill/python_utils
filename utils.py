@@ -1,6 +1,6 @@
 import random
 from math import sqrt,log,exp,pi,sin,cos,gamma,acos,sqrt
-from collections import Counter
+from collections import Counter, defaultdict
 from matplotlib import pyplot as plt
 import seaborn as sns
 import bisect
@@ -259,7 +259,7 @@ def dna_mi2(xs,ys):
 
 def permute(xs):
     """Return a random permutation of xs"""
-    return np.random.permutation(xs)
+    #return np.random.permutation(xs)
     xs_ = list(xs[:])
     random.shuffle(xs_)
     return xs_
