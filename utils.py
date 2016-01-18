@@ -199,13 +199,20 @@ def mi(xs,ys,correct=True):
     hxy = entropy(zip(xs,ys),correct=correct)
     return hx + hy - hxy
 
-def dna_mi(xs,ys):
+def dna_mi_dep(xs,ys):
     hx  = entropy(xs,correct=True, alphabet_size=4)
     hy  = entropy(ys,correct=True, alphabet_size=4)
     hxy = entropy(zip(xs,ys),correct=True, alphabet_size=16)
     return hx + hy - hxy
     
-
+def dna_mi(xs,ys):
+    N = float(len(xs))
+    joint = defaultdict(int,{k:v/N for k,v in Counter(zip(xs,ys)).items()})
+    margx = {bx:sum(joint[(bx,by)] for by in "ACGT") for bx in "ACGT"}
+    margy = {by:sum(joint[(bx,by)] for bx in "ACGT") for by in "ACGT"}
+    return sum(joint[x,y]*log2(joint[x,y]/(margx[x]*margy[y])) if joint[x,y] else 0
+               for x in "ACGT" for y in "ACGT")
+        
 def mi_table(xs,ys,display=False,normalize=False,f=iota):
     x_vals = sorted(set(xs))
     y_vals = sorted(set(ys))
@@ -252,6 +259,7 @@ def dna_mi2(xs,ys):
 
 def permute(xs):
     """Return a random permutation of xs"""
+    return np.random.permutation(xs)
     xs_ = list(xs[:])
     random.shuffle(xs_)
     return xs_
