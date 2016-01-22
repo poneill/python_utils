@@ -1361,6 +1361,7 @@ def roc_curve(positives,negatives,color=None,annotate=False):
                              arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=0'))
     plt.xlabel("FPR")
     plt.ylabel("TPR")
+    plt.plot([0,1],[0,1],linestyle='--')
     auc = sum(y1*(x1-x0) for ((x0,y0),(x1,y1)) in pairs(zip(fprs,tprs)))
     print "AUC:",auc
     return fprs,tprs,thetas
