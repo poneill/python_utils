@@ -820,7 +820,6 @@ def secant_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=Fals
                 xmax = x
                 ymax = y
 
-
         
 def secant_interval_robust(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,p=0.1):
     #print xmin,xmax,ymin,ymax
@@ -1845,3 +1844,7 @@ def format_params(param_names_str):
     param_string = param_template % globals()
     return param_string
     
+def logsum(log_xs):
+    """given log_xs = map(log,xs), return log(sum(xs))"""
+    a = max(log_xs)
+    return a + log(sum(exp(log_x-a) for log_x in log_xs))
