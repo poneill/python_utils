@@ -1832,8 +1832,8 @@ def scatter(xs,ys,line_color='black',color='b'):
     minval = min(map(min,[xs,ys]))
     maxval = max(map(max,[xs,ys]))
     plt.plot([minval,maxval],[minval,maxval],linestyle='--',color=line_color)
-    print pearsonr(xs,ys)
-    print spearmanr(xs,ys)
+    return pearsonr(xs,ys)
+    #print spearmanr(xs,ys)
 
 def format_params(param_names_str):
     """given string of parameters 'x y z' return string of form:
