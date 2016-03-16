@@ -1830,7 +1830,7 @@ def gelman_rubin(chains):
 def scatter(xs,ys,line_color='black',color='b'):
     plt.scatter(xs,ys,color=color)
     minval = min(map(min,[xs,ys]))
-    maxval = min(map(max,[xs,ys]))
+    maxval = max(map(max,[xs,ys]))
     plt.plot([minval,maxval],[minval,maxval],linestyle='--',color=line_color)
     print pearsonr(xs,ys)
     print spearmanr(xs,ys)
