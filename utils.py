@@ -212,7 +212,12 @@ def dna_mi(xs,ys):
     margy = {by:sum(joint[(bx,by)] for bx in "ACGT") for by in "ACGT"}
     return sum(joint[x,y]*log2(joint[x,y]/(margx[x]*margy[y])) if joint[x,y] else 0
                for x in "ACGT" for y in "ACGT")
-        
+
+def motif_mi(motif):
+    """compute pairwise motif mi without any sample size correction"""
+    cols = transpose(motif)
+    return sum(dna_mi(col1, col2) for col1, col2 in cols)
+    
 def mi_table(xs,ys,display=False,normalize=False,f=iota):
     x_vals = sorted(set(xs))
     y_vals = sorted(set(ys))
@@ -1473,7 +1478,8 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
     """General purpose Metropolis-Hastings sampler.  If use_log is
     true, assume that f is actually log(f)"""
     if dprop is None:
-        print "Warning: using M-H without proposal density: ensure that proposal is symmetric!"
+        if verbose > 0:
+            print "Warning: using M-H without proposal density: ensure that proposal is symmetric!"
         dprop = lambda x_new,x:1
     x = x0
     xs = [x]
@@ -1483,7 +1489,7 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
         for it in xrange(iterations):
             if it == 0 or not cache: # if not caching, reevaluate every time
                 fx = f(x)
-            if it % modulus == 0:
+            if it % modulus == 0 and verbose:
                 print it,fx
             x_new = proposal(x)
             fx_new = f(x_new)
@@ -1510,7 +1516,8 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
                 xs.append(capture_state(x))
         if verbose:
             print "Proposed improvement ratio:",proposed_improvements/float(iterations)
-        print "Acceptance Ratio:",acceptances/float(iterations)
+        if verbose:
+            print "Acceptance Ratio:",acceptances/float(iterations)
         if return_ar:
             return acceptances/float(iterations)
         else:
