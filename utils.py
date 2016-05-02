@@ -157,13 +157,13 @@ def h(ps):
     """compute entropy (in bits) of a probability distribution ps"""
     return -sum([p * safe_log2(p) for p in ps])
 
-def entropy(xs,correct=True,alphabet_size=None):
+def entropy(xs,correct=True,A=None):
     """compute entropy (in bits) of a sample from a categorical
     probability distribution"""
-    if alphabet_size == None:
-        alphabet_size = len(set(xs)) # NB: assuming every element appears!
+    if A == None:
+        A = len(set(xs)) # NB: assuming every element appears!
     ps = frequencies(xs)
-    correction = ((alphabet_size - 1)/(2*log(2)*len(xs)) if correct
+    correction = ((A - 1)/(2*log(2)*len(xs)) if correct
                   else 0) #Basharin 1959
     #print "correction:",correction
     return h(ps) + correction
@@ -175,21 +175,20 @@ def dna_entropy(xs,correct=True):
     #print "correction:",correction
     return h(ps) + (correction if correct else 0)
 
-def motif_entropy(motif,correct=True,alphabet_size=4):
+def motif_entropy(motif,correct=True,A=4):
     """Return the entropy of a motif, assuming independence"""
-    return sum(map(lambda col:entropy(col,correct=correct,alphabet_size=alphabet_size),
+    return sum(map(lambda col:entropy(col,correct=correct,A=A),
                    transpose(motif)))
 
 def columnwise_ic(motif,correct=True):
     return map(lambda col:2-dna_entropy(col,correct=correct),
                    transpose(motif))
 
-def motif_ic(motif,correct=True,alphabet_size=4):
+def motif_ic(motif,correct=True,A=4):
     """Return the entropy of a motif, assuming independence and a
     uniform genomic background"""
-    site_length = len(motif[0])
-    return (log2(alphabet_size) * site_length -
-            motif_entropy(motif,correct=correct,alphabet_size=4))
+    L = len(motif[0])
+    return (log2(A) * L - motif_entropy(motif,correct=correct,A=A))
 
 def mi(xs,ys,correct=True):
     """Compute mutual information (in bits) of samples from two
