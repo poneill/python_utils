@@ -184,11 +184,11 @@ def columnwise_ic(motif,correct=True):
     return map(lambda col:2-dna_entropy(col,correct=correct),
                    transpose(motif))
 
-def motif_ic(motif,correct=True,A=4):
+def motif_ic(motif, correct=True, A=4):
     """Return the entropy of a motif, assuming independence and a
     uniform genomic background"""
     L = len(motif[0])
-    return (log2(A) * L - motif_entropy(motif,correct=correct,A=A))
+    return (log2(A) * L - motif_entropy(motif, correct=correct, A=A))
 
 def mi(xs,ys,correct=True):
     """Compute mutual information (in bits) of samples from two
@@ -215,7 +215,7 @@ def dna_mi(xs,ys):
 def motif_mi(motif):
     """compute pairwise motif mi without any sample size correction"""
     cols = transpose(motif)
-    return sum(dna_mi(col1, col2) for col1, col2 in cols)
+    return sum(dna_mi(col1, col2) for col1, col2 in choose2(cols))
     
 def mi_table(xs,ys,display=False,normalize=False,f=iota):
     x_vals = sorted(set(xs))
