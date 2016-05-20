@@ -1853,3 +1853,14 @@ def logsum(log_xs):
     """given log_xs = map(log,xs), return log(sum(xs))"""
     a = max(log_xs)
     return a + log(sum(exp(log_x-a) for log_x in log_xs))
+
+def robbins_munro(f, x0, iterations=1000, verbose=False):
+    """given f, a noisy function assumed to be monotonically increasing,
+find the root (f(x) == 0), starting from guess x0"""
+    x = x0
+    for i in range(1, iterations + 1):
+        x += 1.0/i * (-f(x))
+        if verbose:
+            print x
+    return x
+    
