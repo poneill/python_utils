@@ -1365,7 +1365,7 @@ def roc_curve(positives,negatives,color=None,annotate=False, return_auc=False):
     plt.xlabel("FPR")
     plt.ylabel("TPR")
     plt.plot([0,1],[0,1],linestyle='--')
-    auc = sum(y1*(x1-x0) for ((x0,y0),(x1,y1)) in pairs(zip(fprs,tprs)))
+    auc = sum(1/2.0 * (y1+y0)*(x1-x0) for ((x0,y0),(x1,y1)) in pairs(zip(fprs,tprs)))
     return fprs,tprs,thetas, auc
     
 def sliding_window(seq,w,verbose=False):
