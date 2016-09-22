@@ -1845,3 +1845,5 @@ def format_params(param_names_str):
     param_string = param_template % globals()
     return param_string
     
+def logmod(x, base=10):
+    return sign(x)*log(x + 1, base)
