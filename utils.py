@@ -1829,7 +1829,7 @@ def gelman_rubin(chains):
         neff = None
     return R_hat,neff
 
-def scatter(xs,ys,line_color='black',color='b'):
+def scatter(xs, ys, line_color='black', color='b'):
     plt.scatter(xs,ys,color=color)
     minval = min(map(min,[xs,ys]))
     maxval = min(map(max,[xs,ys]))
@@ -1846,4 +1846,11 @@ def format_params(param_names_str):
     return param_string
     
 def logmod(x, base=10):
-    return sign(x)*log(x + 1, base)
+    return sign(x)*log(abs(x) + 1, base)
+
+def pearson_na(xs, ys):
+    return pearsonr(*transpose(filter(lambda (x,y):not (pd.isnull(x) or
+                                                         pd.isnull(y)),
+                                       zip(xs,ys))))
+def log10(x):
+    return log(x, 10)
