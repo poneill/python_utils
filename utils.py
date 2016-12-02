@@ -157,13 +157,13 @@ def h(ps):
     """compute entropy (in bits) of a probability distribution ps"""
     return -sum([p * safe_log2(p) for p in ps])
 
-def entropy(xs,correct=True,alphabet_size=None):
+def entropy(xs,correct=True,A=None):
     """compute entropy (in bits) of a sample from a categorical
     probability distribution"""
-    if alphabet_size == None:
-        alphabet_size = len(set(xs)) # NB: assuming every element appears!
+    if A == None:
+        A = len(set(xs)) # NB: assuming every element appears!
     ps = frequencies(xs)
-    correction = ((alphabet_size - 1)/(2*log(2)*len(xs)) if correct
+    correction = ((A - 1)/(2*log(2)*len(xs)) if correct
                   else 0) #Basharin 1959
     #print "correction:",correction
     return h(ps) + correction
@@ -175,21 +175,20 @@ def dna_entropy(xs,correct=True):
     #print "correction:",correction
     return h(ps) + (correction if correct else 0)
 
-def motif_entropy(motif,correct=True,alphabet_size=4):
+def motif_entropy(motif,correct=True,A=4):
     """Return the entropy of a motif, assuming independence"""
-    return sum(map(lambda col:entropy(col,correct=correct,alphabet_size=alphabet_size),
+    return sum(map(lambda col:entropy(col,correct=correct,A=A),
                    transpose(motif)))
 
 def columnwise_ic(motif,correct=True):
     return map(lambda col:2-dna_entropy(col,correct=correct),
                    transpose(motif))
 
-def motif_ic(motif,correct=True,alphabet_size=4):
+def motif_ic(motif, correct=True, A=4):
     """Return the entropy of a motif, assuming independence and a
     uniform genomic background"""
-    site_length = len(motif[0])
-    return (log2(alphabet_size) * site_length -
-            motif_entropy(motif,correct=correct,alphabet_size=4))
+    L = len(motif[0])
+    return (log2(A) * L - motif_entropy(motif, correct=correct, A=A))
 
 def mi(xs,ys,correct=True):
     """Compute mutual information (in bits) of samples from two
@@ -212,7 +211,12 @@ def dna_mi(xs,ys):
     margy = {by:sum(joint[(bx,by)] for bx in "ACGT") for by in "ACGT"}
     return sum(joint[x,y]*log2(joint[x,y]/(margx[x]*margy[y])) if joint[x,y] else 0
                for x in "ACGT" for y in "ACGT")
-        
+
+def motif_mi(motif):
+    """compute pairwise motif mi without any sample size correction"""
+    cols = transpose(motif)
+    return sum(dna_mi(col1, col2) for col1, col2 in choose2(cols))
+    
 def mi_table(xs,ys,display=False,normalize=False,f=iota):
     x_vals = sorted(set(xs))
     y_vals = sorted(set(ys))
@@ -820,7 +824,6 @@ def secant_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=Fals
                 xmax = x
                 ymax = y
 
-
         
 def secant_interval_robust(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,p=0.1):
     #print xmin,xmax,ymin,ymax
@@ -1309,7 +1312,7 @@ def roc_curve_ref(positives,negatives,thetas=None,color=None):
     plt.xlabel("FPR")
     plt.ylabel("TPR")
 
-def roc_curve(positives,negatives,color=None,annotate=False):
+def roc_curve(positives,negatives,color=None,annotate=False, return_auc=False):
     """Given a set of positive scores and a set of negative scores, plot a
     ROC curve.
 
@@ -1362,9 +1365,8 @@ def roc_curve(positives,negatives,color=None,annotate=False):
     plt.xlabel("FPR")
     plt.ylabel("TPR")
     plt.plot([0,1],[0,1],linestyle='--')
-    auc = sum(y1*(x1-x0) for ((x0,y0),(x1,y1)) in pairs(zip(fprs,tprs)))
-    print "AUC:",auc
-    return fprs,tprs,thetas
+    auc = sum(1/2.0 * (y1+y0)*(x1-x0) for ((x0,y0),(x1,y1)) in pairs(zip(fprs,tprs)))
+    return fprs,tprs,thetas, auc
     
 def sliding_window(seq,w,verbose=False):
     i = 0
@@ -1475,7 +1477,8 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
     """General purpose Metropolis-Hastings sampler.  If use_log is
     true, assume that f is actually log(f)"""
     if dprop is None:
-        print "Warning: using M-H without proposal density: ensure that proposal is symmetric!"
+        if verbose > 0:
+            print "Warning: using M-H without proposal density: ensure that proposal is symmetric!"
         dprop = lambda x_new,x:1
     x = x0
     xs = [x]
@@ -1485,7 +1488,7 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
         for it in xrange(iterations):
             if it == 0 or not cache: # if not caching, reevaluate every time
                 fx = f(x)
-            if it % modulus == 0:
+            if it % modulus == 0 and verbose:
                 print it,fx
             x_new = proposal(x)
             fx_new = f(x_new)
@@ -1512,7 +1515,8 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
                 xs.append(capture_state(x))
         if verbose:
             print "Proposed improvement ratio:",proposed_improvements/float(iterations)
-        print "Acceptance Ratio:",acceptances/float(iterations)
+        if verbose:
+            print "Acceptance Ratio:",acceptances/float(iterations)
         if return_ar:
             return acceptances/float(iterations)
         else:
@@ -1832,10 +1836,10 @@ def gelman_rubin(chains):
 def scatter(xs, ys, line_color='black', color='b'):
     plt.scatter(xs,ys,color=color)
     minval = min(map(min,[xs,ys]))
-    maxval = min(map(max,[xs,ys]))
+    maxval = max(map(max,[xs,ys]))
     plt.plot([minval,maxval],[minval,maxval],linestyle='--',color=line_color)
-    print pearsonr(xs,ys)
-    print spearmanr(xs,ys)
+    return pearsonr(xs,ys)
+    #print spearmanr(xs,ys)
 
 def format_params(param_names_str):
     """given string of parameters 'x y z' return string of form:
@@ -1844,7 +1848,7 @@ def format_params(param_names_str):
     param_template = ", ".join("{0}=%({0})s".format(v) for v in var_names)
     param_string = param_template % globals()
     return param_string
-    
+
 def logmod(x, base=10):
     return sign(x)*log(abs(x) + 1, base)
 
@@ -1854,3 +1858,27 @@ def pearson_na(xs, ys):
                                        zip(xs,ys))))
 def log10(x):
     return log(x, 10)
+
+def logsum(log_xs):
+    """given log_xs = map(log,xs), return log(sum(xs))"""
+    a = max(log_xs)
+    return a + log(sum(exp(log_x-a) for log_x in log_xs))
+
+def robbins_munro(f, x0, iterations=1000, verbose=False, return_hist=False):
+    """given f, a noisy function assumed to be monotonically increasing,
+find the root (f(x) == 0), starting from guess x0"""
+    x = x0
+    x_hist, y_hist = [], []
+    for i in range(1, iterations + 1):
+        y = f(x)
+        if return_hist:
+            x_hist.append(x)
+            y_hist.append(y)
+        x += 1.0/i * (-y)
+        if verbose:
+            print i, x, y
+    if not return_hist:
+        return x
+    else:
+        return x, x_hist, y_hist
+
