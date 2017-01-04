@@ -12,6 +12,7 @@ from scipy.stats import mannwhitneyu
 from tqdm import *
 from scipy.stats import pearsonr, spearmanr
 import pandas as pd
+from functools import reduce
 epsilon = 10**-100
 
 def translate_spins(spins):
@@ -58,7 +59,7 @@ def mean_and_sd(xs):
 
 def mode(xs):
     counts = Counter(xs)
-    x,count = max(counts.items(),key=lambda(x,y):y)
+    x,count = max(list(counts.items()),key=lambda x_y4:x_y4[1])
     return x
 
 def variance(xs,correct=True):
@@ -90,10 +91,10 @@ def find_index(p,xs):
     return None
 
 def zipWith(f,xs,ys):
-    return map(lambda(x,y):f(x,y),zip(xs,ys))
+    return [f(x_y6[0],x_y6[1]) for x_y6 in zip(xs,ys)]
 
 def transpose(xxs):
-    return zip(*xxs)
+    return list(zip(*xxs))
 
 def normalize(xs):
     total = float(sum(xs))
@@ -134,11 +135,11 @@ def frequencies_ref(xs):
             counts[x] += 1
         length += 1
     length = float(length)
-    return [count/length for count in counts.values()]
+    return [count/length for count in list(counts.values())]
 
 def frequencies_ref2(xs):
     n = float(len(xs))
-    return [v/n for v in Counter(xs).values()]
+    return [v/n for v in list(Counter(xs).values())]
     
 def unique(xs):
     us = []
@@ -150,7 +151,7 @@ def unique(xs):
 def verbose_gen(xs,modulus=1):
     for i,x in enumerate(xs):
         if not i % modulus:
-            print "%s\r" % i,
+            print("%s\r" % i, end=' ')
             sys.stdout.flush()
         yield x
         
@@ -178,12 +179,10 @@ def dna_entropy(xs,correct=True):
 
 def motif_entropy(motif,correct=True,A=4):
     """Return the entropy of a motif, assuming independence"""
-    return sum(map(lambda col:entropy(col,correct=correct,A=A),
-                   transpose(motif)))
+    return sum([entropy(col,correct=correct,A=A) for col in transpose(motif)])
 
 def columnwise_ic(motif,correct=True):
-    return map(lambda col:2-dna_entropy(col,correct=correct),
-                   transpose(motif))
+    return [2-dna_entropy(col,correct=correct) for col in transpose(motif)]
 
 def motif_ic(motif, correct=True, A=4):
     """Return the entropy of a motif, assuming independence and a
@@ -196,18 +195,18 @@ def mi(xs,ys,correct=True):
     categorical probability distributions"""
     hx  = entropy(xs,correct=correct)
     hy  = entropy(ys,correct=correct)
-    hxy = entropy(zip(xs,ys),correct=correct)
+    hxy = entropy(list(zip(xs,ys)),correct=correct)
     return hx + hy - hxy
 
 def dna_mi_dep(xs,ys):
     hx  = entropy(xs,correct=True, alphabet_size=4)
     hy  = entropy(ys,correct=True, alphabet_size=4)
-    hxy = entropy(zip(xs,ys),correct=True, alphabet_size=16)
+    hxy = entropy(list(zip(xs,ys)),correct=True, alphabet_size=16)
     return hx + hy - hxy
     
 def dna_mi(xs,ys):
     N = float(len(xs))
-    joint = defaultdict(int,{k:v/N for k,v in Counter(zip(xs,ys)).items()})
+    joint = defaultdict(int,{k:v/N for k,v in list(Counter(list(zip(xs,ys))).items())})
     margx = {bx:sum(joint[(bx,by)] for by in "ACGT") for bx in "ACGT"}
     margy = {by:sum(joint[(bx,by)] for bx in "ACGT") for by in "ACGT"}
     return sum(joint[x,y]*log2(joint[x,y]/(margx[x]*margy[y])) if joint[x,y] else 0
@@ -223,9 +222,9 @@ def mi_table(xs,ys,display=False,normalize=False,f=iota):
     y_vals = sorted(set(ys))
     N = float(len(xs))
     assert len(ys) == N
-    x_freqs = {k:v/N for (k,v) in Counter(xs).items()}
-    y_freqs = {k:v/N for (k,v) in Counter(ys).items()}
-    joint_freqs = Counter({k:v/N for (k,v) in Counter(zip(xs,ys)).items()})
+    x_freqs = {k:v/N for (k,v) in list(Counter(xs).items())}
+    y_freqs = {k:v/N for (k,v) in list(Counter(ys).items())}
+    joint_freqs = Counter({k:v/N for (k,v) in list(Counter(list(zip(xs,ys))).items())})
     def denom(x,y):
         if normalize:
             return (x_freqs[x]*y_freqs[y])
@@ -233,12 +232,12 @@ def mi_table(xs,ys,display=False,normalize=False,f=iota):
             return 1
     table = [[f(joint_freqs[x,y]/denom(x,y)) for y in y_vals] for x in x_vals]
     if display:
-        print " ".join(y_vals)
+        print(" ".join(y_vals))
         for i,x in enumerate(x_vals):
-            print x,
+            print(x, end=' ')
             for j,y in enumerate(y_vals):
-                print table[i][j],
-            print
+                print(table[i][j], end=' ')
+            print()
     return table
     
 # def dna_mi(xs,ys):
@@ -256,7 +255,7 @@ def dna_mi2(xs,ys):
     calculation."""
     hx = entropy(xs,correct=False)
     hy = entropy(ys,correct=False)
-    hxy = entropy(zip(xs,ys),correct=False)
+    hxy = entropy(list(zip(xs,ys)),correct=False)
     k = 16
     n = len(xs)
     expected_bias = (k-1)**2/float(2*n)
@@ -287,7 +286,7 @@ def mi_permute(xs,ys,n=100,conf_int=False,p_value=False,zero=False,mi_method=mi)
     elif p_value:
         replicates = sorted(replicates)
         mi_obs = mi_method(xs,ys)
-        return len(filter(lambda s: s >= mi_obs,replicates))/float(n)
+        return len([s for s in replicates if s >= mi_obs])/float(n)
     elif zero:
         mi_obs = mi_method(xs,ys)
         return mi_obs - mean(replicates)
@@ -343,7 +342,7 @@ def nmers(n):
     if n == 1:
         return ["A","C","G","T"]
     else:
-        return sum([map(lambda(b):b+c,nmers(n-1)) for c in base_pair_ordering],[])
+        return sum([[b+c for b in nmers(n-1)] for c in base_pair_ordering],[])
 
 def complement(base):
     return {"A":"T","T":"A","G":"C","C":"G"}[base]
@@ -363,7 +362,7 @@ def wc(word):
 
 def pprint(x):
     for row in x:
-        print row
+        print(row)
 
 def choose2(xs,gen=False):
     """return list of choose(xs, 2) pairs, retaining ordering on xs"""
@@ -373,7 +372,7 @@ def choose2(xs,gen=False):
         return [(x1, x2) for i, x1 in enumerate(xs) for x2 in xs[i+1:]]
 
 def pairs(xs):
-    return zip(xs[:-1],xs[1:])
+    return list(zip(xs[:-1],xs[1:]))
 
 def partition(pred, xs):
     part = []
@@ -424,16 +423,16 @@ def concat(xxs):
     return [x for xs in xxs for x in xs]
 
 def mmap(f,xxs):
-    return [map(f,xs) for xs in xxs]
+    return [list(map(f,xs)) for xs in xxs]
 
 # naive implementation borrowed from stack overflow
 
 def levenshtein(seq1, seq2):
     oneago = None
-    thisrow = range(1, len(seq2) + 1) + [0]
-    for x in xrange(len(seq1)):
+    thisrow = list(range(1, len(seq2) + 1)) + [0]
+    for x in range(len(seq1)):
         twoago, oneago, thisrow = oneago, thisrow, [0] * len(seq2) + [x + 1]
-        for y in xrange(len(seq2)):
+        for y in range(len(seq2)):
             delcost = oneago[y] + 1
             addcost = thisrow[y - 1] + 1
             subcost = oneago[y - 1] + (seq1[x] != seq2[y])
@@ -459,7 +458,7 @@ def bs(xs):
     return sample(len(xs),xs,replace=True)
 
 def bs_ci(f,xs,alpha=0.05,N=1000):
-    fs = sorted([f(bs(xs)) for i in xrange(N)])
+    fs = sorted([f(bs(xs)) for i in range(N)])
     i = int(alpha/2 * N)
     j = int(1 - alpha/2 * N)
     return fs[i],fs[j]
@@ -478,7 +477,7 @@ def matrix_mult(A,B):
     product"""
     return [[sum(A[i][k] * B[k][j] for k in range(len(A[0])))
              for j in range(len(B[0]))]
-            for i in (range(len(A)))]
+            for i in (list(range(len(A))))]
 
 def identity_matrix(n):
     return [[int(i == j) for j in range(n)] for i in range(n)]
@@ -501,10 +500,10 @@ def matrix_power(A,n):
 def boolean_matrix_mult(A,B):
     """Given two row-major boolean matrices as nested lists, return
     the matrix product"""
-    print "in boolean matrix mult"
-    return [[any(A[i][k] * B[k][j] for k in xrange(len(A[0])))
-             for j in xrange(len(B[0]))]
-            for i in verbose_gen(xrange(len(A)))]
+    print("in boolean matrix mult")
+    return [[any(A[i][k] * B[k][j] for k in range(len(A[0])))
+             for j in range(len(B[0]))]
+            for i in verbose_gen(range(len(A)))]
 
 def iterate_ref(f,x,n):
     if n == 0:
@@ -513,7 +512,7 @@ def iterate_ref(f,x,n):
         return iterate(f,f(x),n-1)
 
 def iterate(f,x,n):
-    for i in xrange(n):
+    for i in range(n):
         x = f(x)
     return x
     
@@ -525,14 +524,14 @@ def iterate_list_ref(f,x,n):
 
 def iterate_list(f,x,n):
     xs = [x]
-    for i in xrange(n):
+    for i in range(n):
         x = f(x)
         xs.append(x)
     return xs
     
 def converge(f,x,verbose=False,i=0):
     if verbose:
-        print i
+        print(i)
     y = f(x)
     if y == x:
         return x
@@ -543,7 +542,7 @@ def converge2(f,x,verbose=False,i=0):
     y = f(x)
     while not y == x:
         if verbose:
-            print i
+            print(i)
             i += 1
         x = y
         y = f(x)
@@ -562,7 +561,7 @@ def data2csv(data, filename, sep=", ",header=None,overwrite=False):
     import os
     make_line = lambda row: sep.join([str(field) for field in row]) + "\n"
     if filename in os.listdir('.') and not overwrite:
-        print "found ",filename
+        print("found ",filename)
         pass
     with open(filename, 'w') as f:
         if header:
@@ -614,7 +613,7 @@ def sign(x):
     
 def bisect_interval_ref(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
     if verbose:
-        print xmin,xmax,ymin,ymax
+        print(xmin,xmax,ymin,ymax)
     if ymin is None:
         ymin = f(xmin)
     if ymax is None:
@@ -643,7 +642,7 @@ def bisect_interval(f,xmin,xmax,ymin=None,ymax=None,xtol=1e-10, ytol=1e-10,
     y = f(x)
     while (xmax - xmin) > xtol and abs(y) > ytol:
         if verbose:
-            print xmin,xmax,ymin,ymax
+            print(xmin,xmax,ymin,ymax)
         x = (xmin + xmax)/2.0
         y = f(x)
         if sign(y) == sign(ymin):
@@ -661,20 +660,20 @@ def bisect_interval_noisy_ref(f,x0,
     xs = [x0]
     def a(i):
         return w/(i+1)
-    iterator = itertools.count() if iterations is None else xrange(iterations)
+    iterator = itertools.count() if iterations is None else range(iterations)
     for i in iterator:
         xn = xs[-1]
         fxn = f(xn)
         xnp1 = -a(i)*fxn + xn
         if lb and xnp1 < lb:
-            print "warning: hit lower bound"
+            print("warning: hit lower bound")
             xnp1 = lb
         if ub and xnp1 > ub:
-            print "warning: hit upper bound"
+            print("warning: hit upper bound")
             xnp1 = ub
         xs.append(xnp1)
         if verbose:
-            print i, xn, fxn, abs(xnp1 - xn)
+            print(i, xn, fxn, abs(xnp1 - xn))
         if iterations is None and i > 3:
             if abs(xs[-1] - xs[-4]) < tolerance:
                 return xs[-1]
@@ -688,21 +687,21 @@ def bisect_interval_noisy_spec(f,x0,
     ys = []
     def a(i):
         return w/(i+1)
-    iterator = itertools.count() if iterations is None else xrange(iterations)
+    iterator = itertools.count() if iterations is None else range(iterations)
     for i in iterator:
         xn = xs[-1]
         yn = f(xn)
         ys.append(yn)
         xnp1 = -a(i)*yn + xn
         if lb and xnp1 < lb:
-            print "warning: hit lower bound"
+            print("warning: hit lower bound")
             xnp1 = lb
         if ub and xnp1 > ub:
-            print "warning: hit upper bound"
+            print("warning: hit upper bound")
             xnp1 = ub
         xs.append(xnp1)
         if verbose:
-            print i, xnp1, xn, a(i), abs(xnp1 - xn)
+            print(i, xnp1, xn, a(i), abs(xnp1 - xn))
         if iterations is None and i > 3:
             if abs(xs[-1] - xs[-4]) < tolerance:
                 return xs[-1]
@@ -716,23 +715,23 @@ def bisect_interval_noisy(f,x0,iterations=None,xtol=0.01,verbose=False,lb=None,u
     def b(i):
         return w*(i)**(-1/2.0)
     iterator = (itertools.count(start=1) if iterations is None
-                else xrange(1,iterations+1))
+                else range(1,iterations+1))
     for i in iterator:
         xn = xs[-1]
         yn = f(xn)
         xnp1 = -b(i)*yn + xn
         if lb is not None and xnp1 < lb:
-            print "warning: hit lower bound"
+            print("warning: hit lower bound")
             xnp1 = lb
         if ub is not None and xnp1 > ub:
-            print "warning: hit upper bound"
+            print("warning: hit upper bound")
             xnp1 = ub
         xs.append(xnp1)
         ys.append(yn)
         old_running_mean = running_mean
         running_mean = (old_running_mean*i+xnp1)/(i+1.0)
         if verbose:
-            print i, running_mean, xnp1, xn, abs(running_mean - old_running_mean), mean(ys)
+            print(i, running_mean, xnp1, xn, abs(running_mean - old_running_mean), mean(ys))
         if iterations is None and i > 3:
             if abs(running_mean - old_running_mean) < xtol:
                 return mean(xs)
@@ -742,27 +741,27 @@ def bisect_interval_home_rolled(f, x0,  iterations, a=1, lb=None,ub=None,
                                 verbose=False):
     xs = [x0]
     def restrict(x):
-        print "restricting:",x
+        print("restricting:",x)
         if not lb is None and x < lb:
             return lb
         elif not ub is None and x > ub:
             return ub
         else:
             return x
-    for n in xrange(iterations):
+    for n in range(iterations):
         x = mean(xs)
-        print "x:",x
+        print("x:",x)
         y = f(x)
-        print "y:",y
+        print("y:",y)
         x_new = restrict(x - a*y)
-        print "x_new:",x_new
+        print("x_new:",x_new)
         xs.append(x_new)
-        print x, x_new, y
+        print(x, x_new, y)
     return mean(xs)
         
 def bisect_interval_noisy_kde(f, lb, ub, trials=100, iterations_per_trial=1):
     xs = np.linspace(lb, ub, trials)
-    ys = map(lambda x:mean(f(show(x)) for _ in range(iterations_per_trial)), xs)
+    ys = [mean(f(show(x)) for _ in range(iterations_per_trial)) for x in xs]
     fhat = kde_regress(xs,ys,monotonic=True)
     return bisect_interval(fhat,lb, ub)
 
@@ -781,12 +780,12 @@ def bisect_interval_kw(f,lb,ub, iterations=10, verbose=False):
         elif x > ub - c(n):
             x = ub - c(n)
         if verbose:
-            print n, x
+            print(n, x)
     return x
     
 def secant_interval_ref(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=False):
     if verbose:
-        print xmin,xmax,ymin,ymax
+        print(xmin,xmax,ymin,ymax)
     if ymin is None:
         ymin = f(xmin)
     if ymax is None:
@@ -808,9 +807,9 @@ def secant_interval(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,verbose=Fals
         ymin = f(xmin)
     if ymax is None:
         ymax = f(xmax)
-    for iteration in xrange(1000):
+    for iteration in range(1000):
         if verbose:
-            print xmin,xmax,ymin,ymax
+            print(xmin,xmax,ymin,ymax)
         assert(sign(ymin)!= sign(ymax)), "ymin=%s,ymax=%s" % (ymin,ymax)
         m = (ymax - ymin)/float(xmax - xmin)
         x = xmax - ymax/m
@@ -849,7 +848,7 @@ def secant_interval_robust(f,xmin,xmax,ymin=None,ymax=None,tolerance=1e-10,p=0.1
 
 def percentile(x,xs):
     """Compute what percentile value x is in xs"""
-    return len(filter(lambda y:y < x,xs))/float(len(xs))
+    return len([y for y in xs if y < x])/float(len(xs))
 
 def normal_model(xs):
     mu = mean(xs)
@@ -861,12 +860,11 @@ def solve_quadratic(a,b,c):
     return ((-b + sqrt(discriminant))/(2*a),(-b - sqrt(discriminant))/(2*a))
 
 def show(x):
-    print x
+    print(x)
     return x
 
 def myrange(start,stop,step):
-    return map(lambda x: start + x*step,
-               range(int((stop-start)/step)))
+    return [start + x*step for x in range(int((stop-start)/step))]
 
 def grad_descent(f,x,y,ep_x=0.0001,ep_y=0.0001):
     "minimize f"
@@ -876,12 +874,12 @@ def grad_descent(f,x,y,ep_x=0.0001,ep_y=0.0001):
     while best_z is None or z <= best_z or True:
         z = best_z 
         choices = [(x + ep_x,y),(x - ep_x,y),(x,y + ep_y),(x,y - ep_y)]
-        z_choices = map(lambda (x,y):f(x,y),choices)
-        choice = min(zip(choices,z_choices),key=lambda(z,z_ch):z_ch)
+        z_choices = [f(x_y1[0],x_y1[1]) for x_y1 in choices]
+        choice = min(list(zip(choices,z_choices)),key=lambda z_z_ch:z_z_ch[1])
         (x,y),best_z = choice
         ep_x *= epsilon_shrinkage
         ep_y *= epsilon_shrinkage
-        print x,y,log(best_z),ep_x,ep_y
+        print(x,y,log(best_z),ep_x,ep_y)
     return x,y
 
 def find_connected_components(M):
@@ -956,7 +954,7 @@ def enumerate_mutant_sites(site,k=1):
     site_dict = {site:0}
     j = 0
     for j in range(k):
-        print j
+        print(j)
         d = site_dict.copy()
         for s in d:
             if site_dict[s] != j:
@@ -965,7 +963,7 @@ def enumerate_mutant_sites(site,k=1):
             for neighbor in neighbors:
                 if not neighbor in site_dict:
                     site_dict[neighbor] = j + 1
-    return site_dict.keys()
+    return list(site_dict.keys())
 
 def regexp_from_sites(sites):
     """Return a minimal regexp matching given sites"""
@@ -974,7 +972,7 @@ def regexp_from_sites(sites):
 def sorted_indices(xs):
     """Return a list of indices that puts xs in sorted order.
     E.G.: sorted_indices([40,10,30,20]) => [1,3,2,0]"""
-    return [i for (i,v) in sorted(enumerate(xs),key=lambda(i,v):v)]
+    return [i for (i,v) in sorted(enumerate(xs),key=lambda i_v:i_v[1])]
 
 def indices_where(xs,p):
     return [i for (i,x) in enumerate(xs) if p(x)]
@@ -1015,7 +1013,7 @@ def mutate_motif_p(motif,p):
     L = len(motif[0])
     N = n * L
     r = np.random.binomial(N,p)
-    for _ in xrange(r):
+    for _ in range(r):
         i = random.randrange(n)
         j = random.randrange(L)
         b = motif[i][j]
@@ -1081,14 +1079,14 @@ def inverse_cdf_sample_reference(xs,ps):
     """Sample from xs according to probability distribution ps"""
     PS = cumsum(ps)
     r = random.random()
-    P,x = min(filter(lambda (P,x):P > r,zip(PS,xs)))
+    P,x = min([P_x for P_x in zip(PS,xs) if P_x[0] > r])
     return x
 
 def inverse_cdf_sample_reference2(xs,ps):
     """Sample from xs according to probability distribution ps"""
     PS = fast_cumsum(ps)
     r = random.random()
-    P,x = min(filter(lambda (P,x):P > r,zip(PS,xs)))
+    P,x = min([P_x2 for P_x2 in zip(PS,xs) if P_x2[0] > r])
     for P,x in zip(PS,xs): #slightly slower!
         if P > r:
             return x
@@ -1097,7 +1095,7 @@ def inverse_cdf_reference3(xs,ps):
     """Sample from xs according to probability distribution ps"""
     PS = fast_cumsum(ps)
     r = random.random()
-    P,x = min(filter(lambda (P,x):P > r,zip(PS,xs)))
+    P,x = min([P_x3 for P_x3 in zip(PS,xs) if P_x3[0] > r])
     return x
 
 def inverse_cdf_sample(xs,ps,normalized=True):
@@ -1114,14 +1112,14 @@ def inverse_cdf_sample(xs,ps,normalized=True):
 def pl(f,xs):
     """A convenience function for plotting.
     Usage: plt.plot(*pl(f,xs))"""
-    return [xs,map(f,xs)]
+    return [xs,list(map(f,xs))]
 
 def argmax(xs):
-    i,x = max(enumerate(xs),key= lambda (i,x):x)
+    i,x = max(enumerate(xs),key= lambda i_x:i_x[1])
     return i
 
 def argmin(xs):
-    i,x = min(enumerate(xs),key= lambda (i,x):x)
+    i,x = min(enumerate(xs),key= lambda i_x5:i_x5[1])
     return i
 
 def generate_greedy_motif_with_ic(desired_ic,epsilon,num_seqs,length,verbose=False):
@@ -1137,7 +1135,7 @@ def generate_greedy_motif_with_ic(desired_ic,epsilon,num_seqs,length,verbose=Fal
             motif = motif_prime
             ic = motif_ic(motif)
         if verbose:
-            print ic
+            print(ic)
     return motif
 
 def sa_motif_with_desired_ic(desired_ic,epsilon,num_seqs,length,verbose=False):
@@ -1176,7 +1174,7 @@ def acf(xs,min_lag=None,max_lag=None,verbose=False):
         max_lag = n/2
     mu = mean(xs)
     sigma_sq = variance(xs)
-    ts = verbose_gen(xrange(min_lag,max_lag)) if verbose else xrange(min_lag,max_lag)
+    ts = verbose_gen(range(min_lag,max_lag)) if verbose else range(min_lag,max_lag)
     return [mean([(xs[i] - mu) * (xs[i+t]-mu)/sigma_sq for i in range(n-t)])
             for t in ts]
 
@@ -1209,7 +1207,7 @@ def circular_rolling_average(xs,k):
     about x"""
     n = len(xs)
     ys = xs[-k:] + xs + xs[:k]
-    return [mean(ys[(i-k):(i+k+1)]) for i in xrange(k,n + k)]
+    return [mean(ys[(i-k):(i+k+1)]) for i in range(k,n + k)]
 
 def weiner_deconvolution(ys):
     # Supposing y = h*x + n
@@ -1308,7 +1306,7 @@ def roc_curve_ref(positives,negatives,thetas=None,color=None):
         fpr = np.dot(predicted,1-actual)/float(Nn)
         tprs.append(tpr)
         fprs.append(fpr)
-        print theta,tpr,fpr
+        print(theta,tpr,fpr)
     plt.plot(fprs,tprs,color=color)
     plt.xlabel("FPR")
     plt.ylabel("TPR")
@@ -1324,7 +1322,7 @@ def roc_curve(positives,negatives,color=None,annotate=False, return_auc=False):
 
     """
     instances = sorted([(x,0) for x in negatives] + [(x,1) for x in positives],
-                       key = lambda (x,cls):x,
+                       key = lambda x_cls:x_cls[0],
                        reverse=True)
     i = 0
     if color is None:
@@ -1354,9 +1352,9 @@ def roc_curve(positives,negatives,color=None,annotate=False, return_auc=False):
     plt.plot(fprs,tprs,color=color)
     if annotate:
         theta_labels = ["%e" % theta for theta in thetas]
-        annotations = unique(zip(fprs,tprs,theta_labels))
+        annotations = unique(list(zip(fprs,tprs,theta_labels)))
         modulus = len(annotations)/10
-        print "%s unique annotations" % len(annotations)
+        print("%s unique annotations" % len(annotations))
         for i,(fpr,tpr,theta) in enumerate(annotations):
             if i % modulus == 0:
                 plt.annotate(theta,xy=(fpr,tpr),xytext=(-20,20), textcoords = 'offset points',
@@ -1366,7 +1364,7 @@ def roc_curve(positives,negatives,color=None,annotate=False, return_auc=False):
     plt.xlabel("FPR")
     plt.ylabel("TPR")
     plt.plot([0,1],[0,1],linestyle='--')
-    auc = sum(1/2.0 * (y1+y0)*(x1-x0) for ((x0,y0),(x1,y1)) in pairs(zip(fprs,tprs)))
+    auc = sum(1/2.0 * (y1+y0)*(x1-x0) for ((x0,y0),(x1,y1)) in pairs(list(zip(fprs,tprs))))
     return fprs,tprs,thetas, auc
     
 def sliding_window(seq,w,verbose=False):
@@ -1375,7 +1373,7 @@ def sliding_window(seq,w,verbose=False):
     while i < n - w + 1:
         if verbose:
             if i % verbose == 0:
-                print i
+                print(i)
         yield seq[i:i+w]
         i += 1
 
@@ -1383,8 +1381,7 @@ def consensus(motif):
     """Return the consensus of a motif"""
     cols = transpose(motif)
     return "".join([char for (char,count) in
-                    map(lambda col:max(Counter(col).items(),key=lambda (b,c):c),
-                        cols)])
+                    [max(list(Counter(col).items()),key=lambda b_c:b_c[1]) for col in cols]])
 
 def random_model(xs):
     mu = mean(xs)
@@ -1397,12 +1394,12 @@ def qqplot(xs,ys=None):
     min_val = min(min(xs), min(ys))
     max_val = max(max(xs), max(ys))
     plt.scatter(sorted(xs),sorted(ys))
-    print "Mann-Whitney U test:",mannwhitneyu(xs,ys)
+    print("Mann-Whitney U test:",mannwhitneyu(xs,ys))
     plt.plot([min_val,max_val],[min_val,max_val])
     
 def head(xs, p=iota):
     """Take first element of xs, optionally satisfying predicate p"""
-    filtered_xs = filter(p, xs)
+    filtered_xs = list(filter(p, xs))
     return filtered_xs[0] if filtered_xs else []
 
 def find(p,xs):
@@ -1423,16 +1420,16 @@ def binary_find(p,xs):
     while hi - lo > 1:
         guess = int((lo + hi)/2)
         pguess = p(guess)
-        print lo,plo,hi,phi,guess,pguess
+        print(lo,plo,hi,phi,guess,pguess)
         if pguess:
             hi = guess
             phi = pguess
         else:
             lo = guess
             plo = pguess
-    print "lo:",plo
-    print "hi:",phi
-    print "guess:",pguess
+    print("lo:",plo)
+    print("hi:",phi)
+    print("guess:",pguess)
     return guess
     
 def product_ref(xs):
@@ -1455,8 +1452,8 @@ def unflip_motif(motif):
         pssm = PSSM(loo_motif)
         fd_score = pssm.score(site,both_strands=False)
         bk_score = pssm.score(wc(site),both_strands=False)
-        print site
-        print fd_score,bk_score
+        print(site)
+        print(fd_score,bk_score)
         if bk_score > fd_score:
             mutable_motif[i] = wc(site)
     return mutable_motif
@@ -1479,18 +1476,18 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
     true, assume that f is actually log(f)"""
     if dprop is None:
         if verbose > 0:
-            print "Warning: using M-H without proposal density: ensure that proposal is symmetric!"
+            print("Warning: using M-H without proposal density: ensure that proposal is symmetric!")
         dprop = lambda x_new,x:1
     x = x0
     xs = [x]
     acceptances = 0
     proposed_improvements = 0
     try:
-        for it in xrange(iterations):
+        for it in range(iterations):
             if it == 0 or not cache: # if not caching, reevaluate every time
                 fx = f(x)
             if it % modulus == 0 and verbose:
-                print it,fx
+                print(it,fx)
             x_new = proposal(x)
             fx_new = f(x_new)
             if not use_log:
@@ -1506,8 +1503,8 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
                 characterization = {1:"improvement",0:"stasis",-1:"worsening"}[comp]
                 if comp == 1:
                     proposed_improvements += 1
-                print it,"fx:",fx,"fx_new:",fx_new,"ratio:",ratio,characterization,"r:",r,\
-                       "accept" if ratio > r else "decline","acceptance ratio:",acceptances/float(max(it,1))
+                print(it,"fx:",fx,"fx_new:",fx_new,"ratio:",ratio,characterization,"r:",r,\
+                       "accept" if ratio > r else "decline","acceptance ratio:",acceptances/float(max(it,1)))
             if ratio > r:
                 x = x_new
                 fx = fx_new
@@ -1515,9 +1512,9 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
             if it % every == 0:
                 xs.append(capture_state(x))
         if verbose:
-            print "Proposed improvement ratio:",proposed_improvements/float(iterations)
+            print("Proposed improvement ratio:",proposed_improvements/float(iterations))
         if verbose:
-            print "Acceptance Ratio:",acceptances/float(iterations)
+            print("Acceptance Ratio:",acceptances/float(iterations))
         if return_ar:
             return acceptances/float(iterations)
         else:
@@ -1541,10 +1538,10 @@ def anneal(f,proposal,x0,iterations=50000,T0=1,tf=0,k=1,verbose=False,stopping_c
     def get_temp(it):
         """Return temp for given iteration"""
         return tf + T0*exp(-k*it)
-    for i in xrange(iterations):
+    for i in range(iterations):
         T = get_temp(i)
         if i % 1000 == 0:
-            print i,fx,T
+            print(i,fx,T)
         x_new = proposal(x)
         fx_new = f(x_new)
         T = get_temp(i)
@@ -1552,7 +1549,7 @@ def anneal(f,proposal,x0,iterations=50000,T0=1,tf=0,k=1,verbose=False,stopping_c
             break
         log_ratio = (1/T * (fx-fx_new))
         if verbose:
-            print "fx:",fx,"fx_new:",fx_new,"log_ratio:",log_ratio,"Temperature:",T
+            print("fx:",fx,"fx_new:",fx_new,"log_ratio:",log_ratio,"Temperature:",T)
         if log_ratio > log(random.random()):
             x = x_new
             fx = fx_new
@@ -1562,11 +1559,11 @@ def anneal(f,proposal,x0,iterations=50000,T0=1,tf=0,k=1,verbose=False,stopping_c
         if return_trajectory:
             xs.append(x)
         if fx < stopping_crit:
-            print "Acceptance Ratio:",acceptances/float(iterations)
+            print("Acceptance Ratio:",acceptances/float(iterations))
             return xs if return_trajectory else x_min
     # if we did not ever satisfy the stopping criterion...
     if raise_exception_on_failure:
-        raise(Exception("Failed to anneal"))
+        raise Exception
     else:
         return xs if return_trajectory else x_min
     
@@ -1653,7 +1650,7 @@ def score_seq(matrix,seq):
         else:
             return 3
     ans = 0
-    for i in xrange(len(seq)):
+    for i in range(len(seq)):
         ans += matrix[i][base_dict(seq[i])]
     return ans
 
@@ -1663,7 +1660,7 @@ def seq_scorer(matrix):
     base_dicts = [{b:row[j] for j,b in enumerate("ACGT")} for row in matrix]
     def f(site):
         ans = 0
-        for i in xrange(len(site)):
+        for i in range(len(site)):
             ans += base_dicts[i][site[i]]
         return ans
     return f
@@ -1679,7 +1676,7 @@ def uncurry(f):
     """
     (a -> b -> c) -> (a, b) -> c
     """
-    return lambda (a,b):f(a,b)
+    return lambda a_b:f(a_b[0],a_b[1])
 
 def mapdict(d,xs):
     return [d[x] for x in xs]
@@ -1691,7 +1688,7 @@ def simplex_sample(n):
     return diffs
 
 def how_many(p,xs):
-    return len(filter(p,xs))
+    return len(list(filter(p,xs)))
 
 def dnorm(x,mu=0,sigma=1):
     return 1/(sigma*sqrt(2*pi))*exp(-(x-mu)**2/float(2*sigma**2))
@@ -1710,7 +1707,7 @@ def take(n,xs):
 
 def count(p,xs):
     """Count number of xs satisfying p"""
-    return len(filter(p,xs))
+    return len(list(filter(p,xs)))
 
 def inverse_cdf_sampler(xs,ps):
     """make a bintree for Sampling from discrete distribution ps over set xs"""
@@ -1726,11 +1723,11 @@ def fisher_dist(ps,qs):
 
 def verb(x,verbose=False):
     if verbose:
-        print x
+        print(x)
 
 def report_vars(var_string):
-    print ", ".join(var_name + ":" + str(eval(var_name))
-                   for var_name in var_string.split())
+    print(", ".join(var_name + ":" + str(eval(var_name))
+                   for var_name in var_string.split()))
 
 def kmers(n):
     return itertools.product(*["ACGT" for i in range(n)])
@@ -1772,8 +1769,8 @@ def param_scan(f,xs,ys):
     fig, ax = plt.subplots()
     mat = [[f(x,y) for x in xs] for y in tqdm(ys)]
     plt.imshow(mat,interpolation='none')
-    plt.xticks(range(len(xs)),xs,rotation=90)
-    plt.yticks(range(len(xs)),ys)
+    plt.xticks(list(range(len(xs))),xs,rotation=90)
+    plt.yticks(list(range(len(xs))),ys)
     plt.colorbar()
 
 def kde(xs,sigma=1):
@@ -1784,19 +1781,19 @@ def kde(xs,sigma=1):
 def kde_regress(xs, ys, sigma=None, monotonic=False):
     if monotonic:
         def is_monotonic(f):
-            yhats = map(f,sorted(xs))
+            yhats = list(map(f,sorted(xs)))
             return -1 + 2 * all(y1 <= y2 for y1,y2 in pairs(yhats))
         g = lambda sigma: is_monotonic(kde_regress(xs,ys,sigma=sigma))
         lb = ub = 0.01
         while g(ub) < 0:
             ub *= 2
-            print "ub:", ub
+            print("ub:", ub)
         sigma = bisect_interval(g, lb, ub, xtol=10**-3)
         return kde_regress(xs,ys,sigma=sigma)
-    print "sigma:",sigma
+    print("sigma:",sigma)
     if sigma is None:
         sigma = 3*(max(xs) - min(xs))/float(len(xs))
-        print "sigma:",sigma
+        print("sigma:",sigma)
     def f(xp):
         ds = [dnorm(xp,mu=x,sigma=sigma) for x,y in zip(xs,ys)]
         Z = sum(ds)
@@ -1808,7 +1805,7 @@ def gelman_rubin(chains):
     burned_chains = [chain[N/2:] for chain in chains] # eliminate burn-in
     # now split each one in half
     halved_chains = concat([(chain[:len(chain)/2],chain[len(chain)/2:]) for chain in burned_chains])
-    min_len = min(map(len,halved_chains))
+    min_len = min(list(map(len,halved_chains)))
     halved_chains = [hc[:min_len] for hc in halved_chains]
     m = len(halved_chains)
     n = len(halved_chains[0])
@@ -1827,7 +1824,7 @@ def gelman_rubin(chains):
         return 1 - V(t)/(2*var_hat_plus)
     crit = lambda t:(t % 2 == 1) and rho_hat(t+1) + rho_hat(t+2) < 0
     #T = find(lambda t:(t % 2 == 1) and rho_hat(t+1) + rho_hat(t+2) < 0,range(n-1))
-    T = binary_find(crit,range(n))
+    T = binary_find(crit,list(range(n)))
     if not T is None:
         neff = m*n/(1 + 2*sum(rho_hat(t) for t in range(1,T+1)))
     else:
@@ -1836,8 +1833,8 @@ def gelman_rubin(chains):
 
 def scatter(xs, ys, line_color='black', color='b'):
     plt.scatter(xs,ys,color=color)
-    minval = min(map(min,[xs,ys]))
-    maxval = max(map(max,[xs,ys]))
+    minval = min(list(map(min,[xs,ys])))
+    maxval = max(list(map(max,[xs,ys])))
     plt.plot([minval,maxval],[minval,maxval],linestyle='--',color=line_color)
     return pearsonr(xs,ys)
     #print spearmanr(xs,ys)
@@ -1854,9 +1851,8 @@ def logmod(x, base=10):
     return sign(x)*log(abs(x) + 1, base)
 
 def pearson_na(xs, ys):
-    return pearsonr(*transpose(filter(lambda (x,y):not (pd.isnull(x) or
-                                                         pd.isnull(y)),
-                                       zip(xs,ys))))
+    return pearsonr(*transpose([x_y for x_y in zip(xs,ys) if not (pd.isnull(x_y[0]) or
+                                                         pd.isnull(x_y[1]))]))
 def log10(x):
     return log(x, 10)
 
@@ -1877,7 +1873,7 @@ find the root (f(x) == 0), starting from guess x0"""
             y_hist.append(y)
         x += 1.0/i * (-y)
         if verbose:
-            print i, x, y
+            print(i, x, y)
     if not return_hist:
         return x
     else:
