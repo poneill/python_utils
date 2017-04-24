@@ -1499,7 +1499,7 @@ def mh(f,proposal,x0,dprop=None,iterations=50000,every=1,verbose=0,use_log=False
                 ratio = (fx_new - fx) + prop_ratio
                 r = log(random.random())
             if verbose and it % verbose == 0:
-                comp = cmp(fx_new,fx)
+                comp = fx_new < fx
                 characterization = {1:"improvement",0:"stasis",-1:"worsening"}[comp]
                 if comp == 1:
                     proposed_improvements += 1
