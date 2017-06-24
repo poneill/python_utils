@@ -1879,3 +1879,22 @@ find the root (f(x) == 0), starting from guess x0"""
     else:
         return x, x_hist, y_hist
 
+def probs(xs, pc=0):
+    counts = Counter(xs)
+    N = len(xs)
+    M = len(counts)
+    return {k: (c + pc) / (N + pc*M) for k,c in counts.items()}
+
+def fill_median(xs):
+    med = median([x for x in xs if pd.notnull(x)])
+    return [x if pd.notnull(x) else med for x in xs]
+
+def binom_ci(xs):
+    n = len(xs)
+    p = mean(xs)
+    z = 1.96
+    term1 = 1 / (1 + 1 / n * z**2)
+    term2 = p + 1/(2*n)*z**2
+    term3 = z * sqrt(1/n*(p*(1-p)) + 1/(4*n**2) * z**2)
+    return (term1*(term2 - term3), term1*(term2 + term3))
+    
