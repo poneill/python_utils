@@ -1892,6 +1892,9 @@ def fill_median(xs):
 def binom_ci(xs):
     n = len(xs)
     p = mean(xs)
+    return binom_ci_analytic(n, p)
+
+def binom_ci_analytic(n, p):
     z = 1.96
     term1 = 1 / (1 + 1 / n * z**2)
     term2 = p + 1/(2*n)*z**2
