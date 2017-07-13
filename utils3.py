@@ -1850,6 +1850,12 @@ def format_params(param_names_str):
 def logmod(x, base=10):
     return sign(x)*log(abs(x) + 1, base)
 
+def inv_logmod(x):
+    return sign(x)*(10**abs(x) - 1)
+
+logmod = np.vectorize(logmod)
+inv_logmod = np.vectorize(inv_logmod)
+
 def pearson_na(xs, ys):
     return pearsonr(*transpose([x_y for x_y in zip(xs,ys) if not (pd.isnull(x_y[0]) or
                                                          pd.isnull(x_y[1]))]))
