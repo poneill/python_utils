@@ -1107,7 +1107,7 @@ def inverse_cdf_sample(xs,ps,normalized=True):
         acc += p
         if acc > r:
             return x
-    raise Exception("failed to return on:",xs,ps)
+    raise Exception("failed to return on:",xs, ps, r)
 
 def pl(f,xs):
     """A convenience function for plotting.
