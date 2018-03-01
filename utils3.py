@@ -1546,10 +1546,11 @@ def anneal(f,proposal,x0,iterations=50000,T0=1,tf=0,k=1,verbose=False,stopping_c
         fx_new = f(x_new)
         T = get_temp(i)
         if T == 0:
+            print("excited due to T=0")
             break
         log_ratio = (1/T * (fx-fx_new))
         if verbose:
-            print("fx:",fx,"fx_new:",fx_new,"log_ratio:",log_ratio,"Temperature:",T)
+            print(i, "fx:",fx,"fx_new:",fx_new,"log_ratio:",log_ratio,"Temperature:",T)
         if log_ratio > log(random.random()):
             x = x_new
             fx = fx_new
@@ -1584,7 +1585,7 @@ def motif_kl(motif1,motif2,pseudocount=1/4.0):
     """Return Kullbeck-Leibler divergence of two motifs, assuming
     independence between columns"""
     n = float(len(motif1))
-    assert(n == len(motif2) and len(motif1[0]) == len(motif2[0]))
+    assert(len(motif1[0]) == len(motif2[0]))
     ps = [[(col.count(b) + pseudocount)/n for b in "ACGT"] for col in transpose(motif1)]
     qs = [[(col.count(b) + pseudocount)/n for b in "ACGT"] for col in transpose(motif2)]
     return sum([pj*log2(pj/qj)
