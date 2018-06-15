@@ -120,7 +120,7 @@ def np_log_normalize(log_xs):
     log_Z = np_log_sum(log_xs)
     return log_xs - log_Z
     
-def frequencies(xs):
+def frequencies_dep(xs):
     # faster than either of frequencies_ref [!]
     length = float(len(xs))
     return [xs.count(x)/length for x in set(xs)]
@@ -137,7 +137,7 @@ def frequencies_ref(xs):
     length = float(length)
     return [count/length for count in list(counts.values())]
 
-def frequencies_ref2(xs):
+def frequencies(xs):
     n = float(len(xs))
     return [v/n for v in list(Counter(xs).values())]
     
@@ -159,7 +159,7 @@ def h(ps):
     """compute entropy (in bits) of a probability distribution ps"""
     return -sum([p * safe_log2(p) for p in ps])
 
-def entropy(xs,correct=True,A=None):
+def entropy(xs, correct=True, A=None):
     """compute entropy (in bits) of a sample from a categorical
     probability distribution"""
     if A == None:
@@ -1900,7 +1900,7 @@ def fill_median(xs):
 def binom_ci(xs):
     n = len(xs)
     p = mean(xs)
-    return binom_ci_analytic(n, p)
+    return binom_ci_wilson(n, p)
 
 def binom_ci_analytic(n, p):
     z = 1.96
@@ -1908,4 +1908,12 @@ def binom_ci_analytic(n, p):
     term2 = p + 1/(2*n)*z**2
     term3 = z * sqrt(1/n*(p*(1-p)) + 1/(4*n**2) * z**2)
     return (term1*(term2 - term3), term1*(term2 + term3))
-    
+
+def binom_ci_wilson(n, p):
+    denom = 2 * (n + z**2)
+    t1 = 2*n*p + z**2
+    t2min = z*sqrt(z**2 - 1.0/n + 4*n*p*(1-p) + (4*p - 2)) + 1
+    t2max = z*sqrt(z**2 - 1.0/n + 4*n*p*(1-p) - (4*p - 2)) + 1
+    wmin = max(0, (t1 - t2min)/denom)
+    wmax = min(1, (t1 + t2max)/denom)
+    return (wmin, wmax)
