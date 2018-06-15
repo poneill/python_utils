@@ -2,7 +2,7 @@ import random
 from math import sqrt,log,exp,pi,sin,cos,gamma,acos,sqrt
 from collections import Counter, defaultdict
 from matplotlib import pyplot as plt
-import seaborn as sns
+#import seaborn as sns
 import bisect
 import sys
 import numpy as np
@@ -1581,13 +1581,14 @@ def motif_gini(motif,correct=False):
     """Return the gini coefficient of the column ics"""
     return gini(columnwise_ic(motif,correct=correct))
     
-def motif_kl(motif1,motif2,pseudocount=1/4.0):
+def motif_kl(motif1,motif2,pc=1/4.0):
     """Return Kullbeck-Leibler divergence of two motifs, assuming
     independence between columns"""
-    n = float(len(motif1))
+    n1 = float(len(motif1))
+    n2 = float(len(motif2))
     assert(len(motif1[0]) == len(motif2[0]))
-    ps = [[(col.count(b) + pseudocount)/n for b in "ACGT"] for col in transpose(motif1)]
-    qs = [[(col.count(b) + pseudocount)/n for b in "ACGT"] for col in transpose(motif2)]
+    ps = [[(col.count(b) + pc)/(n1 + pc*4) for b in "ACGT"] for col in transpose(motif1)]
+    qs = [[(col.count(b) + pc)/(n2 + pc*4) for b in "ACGT"] for col in transpose(motif2)]
     return sum([pj*log2(pj/qj)
                 for p,q in zip(ps,qs)
                 for pj,qj in zip(p,q)
@@ -1638,7 +1639,7 @@ def score_seq_ns(matrix,seq,ns=False):
     else:
         return specific_binding
 
-def score_seq(matrix,seq):
+def score_seq(matrix, seq):
     #base_dict = {'A':0,'C':1,'G':2,'T':3}
     def base_dict(b):
         if b <= "C":
@@ -1668,10 +1669,10 @@ def seq_scorer(matrix):
         
 
         
-def score_genome(matrix,genome,ns=False):
+def score_genome(matrix,genome):
     w = len(matrix)
     L = len(genome)
-    return [score_seq(matrix,genome[i:i+w],ns=ns) for i in range(L-w+1)]
+    return [score_seq(matrix,genome[i:i+w]) for i in range(L-w+1)]
     
 def uncurry(f):
     """
